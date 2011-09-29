@@ -2,36 +2,23 @@
 #
 # spikeval - evalplots.py
 #
-# Philipp Meier - <pmeier82 at gmail dot com>
-# 2009-05-16
-#
-# $Id$
+# Philipp Meier <pmeier82 at googlemail dot com>
+# 2011-09-29
 #
 
-"""plotting lib for the evaluation website
-
-using matplotlib in non GUI mode with backend: agg (saving to png files)
-"""
+"""plots for evaluation"""
+__author__ = 'Philipp Meier <pmeier82 at googlemail dot com>'
 __docformat__ = 'restructuredtext'
 
 
 ##--- IMPORTS
 
-# builtins
-from os.path import join
-
 import sys
-
-print sys.path
-# packages
+from os.path import join
 from h5py import File
 import scipy as N
 from scipy.io import loadmat
-# spike
-import common.plot as plot
-
-P, COLORS = plot.P, plot.COLORS
-import common as U
+import plot
 
 
 ##--- FUNCTIONS
@@ -40,13 +27,13 @@ def do_plotting(save_dir, data_file, events, delta_shift, name='none'):
     """produces all plots to the desired dir for the passed data
 
     :Parameters:
-    save_dir: path
+    save_dir : path
         dir where the plots are saved
-    data_file: path
+    data_file : path
         data archive (from simulator)
-    events: dict
+    events : dict
         timeseries data for the units
-    name: string
+    name : string
         name for the chart title
     """
 
@@ -60,8 +47,8 @@ def do_plotting(save_dir, data_file, events, delta_shift, name='none'):
         # assume hdf5
         arc = File(data_file, 'r')
         X = arc['X'].value
-        cut = arc['P/templateLengthSamples'][0, 0]
-        srate = arc['P/sampleRate'][0, 0]
+        cut = arc['plt/templateLengthSamples'][0, 0]
+        srate = arc['plt/sampleRate'][0, 0]
         NC = arc['C'].value
         arc.close()
         del arc
@@ -72,14 +59,14 @@ def do_plotting(save_dir, data_file, events, delta_shift, name='none'):
             X = arc['X'].T
 
             # check the archive since Scipy 0.6 handles matlab files differently then Scipy 0.7!
-            if isinstance(arc['P'], N.ndarray):
+            if isinstance(arc['plt'], N.ndarray):
                 # new scipy:
-                cut = arc['P'][0, 0].templateLengthSamples[0, 0]
-                srate = arc['P'][0, 0].sampleRate[0, 0]
+                cut = arc['plt'][0, 0].templateLengthSamples[0, 0]
+                srate = arc['plt'][0, 0].sampleRate[0, 0]
             else:
                 # old scipy on tairach:
-                cut = arc['P'].templateLengthSamples
-                srate = arc['P'].sampleRate
+                cut = arc['plt'].templateLengthSamples
+                srate = arc['plt'].sampleRate
                 # add second dimension on tairach since the old scipy loads 1D arrays
                 X = N.atleast_2d(X)
 

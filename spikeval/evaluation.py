@@ -20,7 +20,8 @@ from multiprocessing import Process
 class EvalException(Exception):
     pass
 
-
+class PersistantObjectHandle(object):
+    pass
 
 class ModuleInput(PersistantObjectHandle):
     """module input object"""

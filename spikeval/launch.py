@@ -69,13 +69,13 @@ def sql_query(db, query):
         cur = db.cursor()
         SQLLOG.info(query)
         cur.execute(query)
-        rval = cur.fetchall();
+        rval = cur.fetchall()
         db.commit()
     except Exception, ex:
         LOG.error('Error while executing sql query: %s' % query)
         LOG.exception(ex)
     finally:
-        cur.close();
+        cur.close()
     return rval
 
 

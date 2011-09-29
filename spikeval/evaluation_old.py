@@ -33,7 +33,7 @@ from scipy import ndarray
 from multiprocessing import Process
 from logging import getLogger
 # spike
-from filetypes import read_file
+from file_types import read_file
 from sortingeval import sorting_eval
 
 

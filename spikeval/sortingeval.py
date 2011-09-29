@@ -9,7 +9,7 @@ import   os.path as osp
 # packages
 # spike
 from evalplots import do_plotting
-from filetypes import read_file
+from file_types import read_file
 from common import align_spike_trains
 
 
@@ -37,7 +37,7 @@ def sorting_eval(data_dir, ev_file, base_dir, gt_file, result_dir, log=None):
     results = align_spike_trains(
         groundtruth,
         train,
-        maxshift=35
+        max_shift=35
     )
 
     log('evaluation done!')
@@ -54,10 +54,7 @@ def sorting_eval(data_dir, ev_file, base_dir, gt_file, result_dir, log=None):
     )
     log('plots done!')
 
-    rval = {}
-    rval['results'] = results
-    rval['train'] = train
-    rval['benchmark'] = benchmark
+    rval = {'results': results, 'train': train, 'benchmark': benchmark}
     return rval
 
 
