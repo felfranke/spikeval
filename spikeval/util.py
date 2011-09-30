@@ -7,7 +7,6 @@
 #
 
 """tools for spike train evaluation"""
-from __future__ import with_statement
 __author__ = 'Philipp Meier <pmeier82 at googlemail dot com>'
 __docformat__ = 'restructuredtext'
 
@@ -39,6 +38,7 @@ def dict_list_to_ndarray(in_dict):
     finally:
         return in_dict
 
+
 def dict_sort_ndarrays(in_dict):
     """sort all arrays in a dictionary"""
 
@@ -48,7 +48,6 @@ def dict_sort_ndarrays(in_dict):
                 in_dict[k] = sp.sort(in_dict[k])
     finally:
         return in_dict
-
 
 ##---MAIN
 
