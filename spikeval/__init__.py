@@ -12,11 +12,3 @@ __docformat__ = 'restructuredtext'
 
 
 ##---IMPORTS
-
-from . import (evalplots,
-               evaluation,
-               evaluation_old,
-               file_types,
-               launch,
-               sortingeval,
-               util)

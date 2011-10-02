@@ -9,13 +9,9 @@
 
 
 """spike train alignment metric"""
-from __future__ import with_statement
+
 __author__ = 'Philipp Meier <pmeier82 at googlemail dot com>'
 __docformat__ = 'restructuredtext'
-
-
-##---ALL
-
 __all__ = [
     'align_spike_trains',
     'similarity',
@@ -24,30 +20,33 @@ __all__ = [
     'nice_table_from_analysis',
     'csv_from_analysis',
     'print_nice_table',
-    ]
+]
 
 
 ##--- IMPORTS
 
 import scipy as sp
+from ..util import dict_arrsort, dict_list2arr
 
 
 ##--- FUNCTIONS
 
-# --------------------------------------------------------------------
 def align_spike_trains(G, E, max_shift=15, max_jitter=6, max_overlap_dist=45):
     """computes the evaluation of spike sorting
 
     E contains the sorted spike
     trains - given the real/ideal/ground truth spike trains in G
 
-    Calculates the similarity matrix between all pairs of spike trains from the
-    ground truth and the estimation. This is used to find the optimal assignment
+    Calculates the similarity matrix between all pairs of spike trains from
+    the
+    ground truth and the estimation. This is used to find the optimal
+    assignment
     between the spike trains, if one is a ground truth and the other is an
     estimation.
 
     Assignment Matrix:
-        A label is assigned to every estimated spike. The following table lists
+        A label is assigned to every estimated spike. The following table
+        lists
         all possible labels, given the different configurations is the
         ground truth. We assume E1 was found TO correlate with G1 and E2 is
         corresponding to G2. A "1" indicates a spike w.r.t. shift and jitter.
@@ -67,8 +66,10 @@ def align_spike_trains(G, E, max_shift=15, max_jitter=6, max_overlap_dist=45):
         FPA
             E1 spike is assigned to non associated ground truth spike train.
         TPOvp : true positive and overlap
-            E1 spike is assigned to associated ground truth spike train and this
-            spike participates in an overlap with another ground truth spike train.
+            E1 spike is assigned to associated ground truth spike train and
+            this
+            spike participates in an overlap with another ground truth spike
+             train.
         FP : false positive
             E1 spike is not assigned to any ground truth spike.
         FN : false negative
@@ -88,13 +89,16 @@ def align_spike_trains(G, E, max_shift=15, max_jitter=6, max_overlap_dist=45):
 
     :Parameters:
         G : dict of ndarray
-            dict containing 1d ndarrays/lists of integers, representing the single unit
+            dict containing 1d ndarrays/lists of integers,
+            representing the single unit
             spike trains. This is the ground truth.
         E : dict of ndarray
-            dict containing 1d ndarrays/lists of integers, representing the single unit
+            dict containing 1d ndarrays/lists of integers,
+            representing the single unit
             spike trains. this is the estimation.
         maxshift : int
-            Upper bound for the tested shift of spike trains towards each other
+            Upper bound for the tested shift of spike trains towards each
+            other
             Default=15
         maxjitter : int
             upper bound for the tested jitter tolerance
@@ -105,13 +109,11 @@ def align_spike_trains(G, E, max_shift=15, max_jitter=6, max_overlap_dist=45):
     """
     # DOC: this documentation needs to be more precise on the return part!!
 
-    # convert to ndarrays
-    G = dict_list_to_ndarray(G)
-    E = dict_list_to_ndarray(E)
-    # sort the damned arrays!
-    G = dict_sort_ndarrays(G)
-    E = dict_sort_ndarrays(E)
-
+    # inits and checks
+    G = dict_list2arr(G)
+    E = dict_list2arr(E)
+    G = dict_arrsort(G)
+    E = dict_arrsort(E)
     n = len(G)
     m = len(E)
 
@@ -120,7 +122,8 @@ def align_spike_trains(G, E, max_shift=15, max_jitter=6, max_overlap_dist=45):
 
     rval = {'sfuncs':sp.zeros((n, m, 2 * max_shift + 1))}
 
-    # Compute similarity score and optimal shift between all pairs of spiketrains
+    # compute similarity score and optimal shift between all pairs of spike
+    # trains
     for i in xrange(n):
         for j in xrange(m):
             sfunc = similarity(G[G.keys()[i]], E[E.keys()[j]], max_shift)
@@ -128,13 +131,13 @@ def align_spike_trains(G, E, max_shift=15, max_jitter=6, max_overlap_dist=45):
             shift_matrix[i, j] = sfunc.argmax() - max_shift
             rval['sfuncs'][i, j, :] = sfunc
 
-    # Shift all estimated spike trains so that they fit optimal to the best
+    # shift all estimated spike trains so that they fit optimal to the best
     # matching true spike train
     u_f2k = sp.zeros(m)
     delta_shift = sp.zeros(m)
     for j in xrange(m):
         myidx = similarity_matrix[:, j].argmax()
-        delta_shift[j] = shift_matrix[myidx, j]
+        elta_shift[j] = shift_matrix[myidx, j]
         E[E.keys()[j]] = sp.array(E[E.keys()[j]]) + delta_shift[j]
 
     # sort the spiketrain pairings according to their similarity measure
@@ -169,13 +172,16 @@ def align_spike_trains(G, E, max_shift=15, max_jitter=6, max_overlap_dist=45):
         EBlocked[E.keys()[j]] = sp.zeros(E[E.keys()[j]].shape)
 
     # GBlocked will contain for every _inserted_ spike a 0 or a 1
-    # 0: it was not assigned to any of the found spike trains => false negatives
+    # 0: it was not assigned to any of the found spike trains => false
+    # negatives
     # 1: it was assigned to a spike of E => either true positive or false
     #    negative + false positive wrong assignment
     #
     # EBlocked will contain for every _found_ spike a 0 or a 1
-    # 0: it was not assigned to any of the inserted spike trains => false positive
-    # 1: it was assigned to a spike of G => it will be handled when G is analyzed!
+    # 0: it was not assigned to any of the inserted spike trains => false
+    # positive
+    # 1: it was assigned to a spike of G => it will be handled when G is
+    # analyzed!
 
     spike_number_assignment_matrix = sp.zeros((n, m))
     # run over the sorted tupels and block all established spike assignments
@@ -241,10 +247,14 @@ def align_spike_trains(G, E, max_shift=15, max_jitter=6, max_overlap_dist=45):
         snam[i, j] = -1
         count += 1
 
-    # now we want to calculate FPs and FNs. Since in spike_number_assignment_matrix
-    # the assigned spikes are coded and in u_k2f and u_f2k the assignments of the
-    # units to each other, we can now compare the number of assignments to the total
-    # number of spikes in the corresponding trains. this will directly give the
+    # now we want to calculate FPs and FNs. Since in
+    # spike_number_assignment_matrix
+    # the assigned spikes are coded and in u_k2f and u_f2k the assignments
+    # of the
+    # units to each other, we can now compare the number of assignments to
+    # the total
+    # number of spikes in the corresponding trains. this will directly give
+    # the
     # correct/error numbers.
 
     # mark all the overlapping spikes
@@ -295,7 +305,8 @@ def align_spike_trains(G, E, max_shift=15, max_jitter=6, max_overlap_dist=45):
                         GL[k1][alignment[(k1, k2)][a][0]] = 5 #FPAO
                         EL[k2][alignment[(k1, k2)][a][1]] = 5
                         FPAO[i] += 1
-                        FPAO_E[j] += 1  # Count assignment errors twice! FP + FN
+                        FPAO_E[
+                        j] += 1  # Count assignment errors twice! FP + FN
                     else:
                         GL[k1][alignment[(k1, k2)][a][0]] = 4 # FPA
                         EL[k2][alignment[(k1, k2)][a][1]] = 4
@@ -311,8 +322,9 @@ def align_spike_trains(G, E, max_shift=15, max_jitter=6, max_overlap_dist=45):
                 else:
                     GL[k1][sp] = 6  # FN
                     FN[i] += 1
-        # The last thing to do is to check all labels of spikes in E. Those
-    # which have no label yet are FPs
+                    # The last thing to do is to check all labels of spikes
+                    # in E. Those
+        # which have no label yet are FPs
     for j in xrange(m):
         k2 = E.keys()[j]
         FP[j] = 0
@@ -348,12 +360,17 @@ def align_spike_trains(G, E, max_shift=15, max_jitter=6, max_overlap_dist=45):
     rval['table'].append(['GT Unit ID', # ID of known Unit
                           'Found Unit ID', # ID of associated found Unit
                           'Known Spikes', # Number of Spikes of Known Unit
-                          'Overlapping Spikes', # Number of those Spikes participating in an Overlap
+                          'Overlapping Spikes',
+                          # Number of those Spikes participating in an Overlap
                           'Found Spikes', # Number of Spikes of Found Unit
-                          'True Pos', # Number of those Spikes which are assigned to Spikes
+                          'True Pos',
+                          # Number of those Spikes which are assigned to
+                          # Spikes
                           # of the associated known Unit.
                           'True Pos Ovps', #
-                          'False Pos Assign GT', # Number of Spikes of Found Unit which are assigned to
+                          'False Pos Assign GT',
+                          # Number of Spikes of Found Unit which are
+                          # assigned to
                           # to a non-associated Unit
                           'False Pos Assign Found', #
                           'False Pos Ovps GT', # FPAO
@@ -363,13 +380,18 @@ def align_spike_trains(G, E, max_shift=15, max_jitter=6, max_overlap_dist=45):
                           'False Neg Overlaps', #
                           'False Pos'])              #
 
-    # Build Table with one row for every assignment of two spike trains and one row
-    # for every unassigned spike train. Problem TODO: The number of false positive assignments for
-    # one of the assignment rows has to be the sum of the individual assignement
-    # errors. ???? ->This way an assignment error counts as 2 errors (one FP and one FN).
+    # Build Table with one row for every assignment of two spike trains and
+    # one row
+    # for every unassigned spike train. Problem TODO: The number of false
+    # positive assignments for
+    # one of the assignment rows has to be the sum of the individual
+    # assignement
+    # errors. ???? ->This way an assignment error counts as 2 errors (one FP
+    # and one FN).
 
     remaining_found_units = sp.ones(m)
-    # Build the assignment rows and unassigned ground truth spike train rows first
+    # Build the assignment rows and unassigned ground truth spike train rows
+    # first
     for i in xrange(n):
         unitk = G.keys()[i]
         known = rval['num_known'][i]
@@ -395,7 +417,8 @@ def align_spike_trains(G, E, max_shift=15, max_jitter=6, max_overlap_dist=45):
         rval['table'].append([unitk, unitf, known, overlapping, found, tp,
                               tpo, fpa, fpae, fpao, fpaoe, fn, fno, fp])
 
-    # Append "False Positive Unit" which has all found spikes of found units which
+    # Append "False Positive Unit" which has all found spikes of found units
+    # which
     # were not assigned to a ground truth unit
     for j in xrange(m):
         if remaining_found_units[j] == 1:
@@ -414,7 +437,7 @@ def align_spike_trains(G, E, max_shift=15, max_jitter=6, max_overlap_dist=45):
 
 def similarity(st1, st2, mtau):
     """
-    Calculates the crosscorrelation function between two spike trains
+    Calculates the cross correlation function between two spike trains
     """
     sfunc = sp.zeros(2 * mtau + 1)
     for tau in xrange(-mtau, mtau + 1):
@@ -456,7 +479,8 @@ def overlaps(G, window):
     # run over all pairs of spike trains in G
     for i in xrange(n):
         for j in xrange(i + 1, n):
-            # for every pair run over all spikes in i and check whether a spike
+            # for every pair run over all spikes in i and check whether a
+            # spike
             # in j overlaps
             trainI = G[G.keys()[i]]
             trainJ = G[G.keys()[j]]
@@ -465,7 +489,8 @@ def overlaps(G, window):
             while idxI < len(trainI) and idxJ < len(trainJ):
                 # Overlapping?
                 if abs(trainI[idxI] - trainJ[idxJ]) < window:
-                    # Every spike can only be in one or no overlap. prevents triple
+                    # Every spike can only be in one or no overlap. prevents
+                    # triple
                     # counting
                     if O[G.keys()[i]][idxI] == 0:
                         O[G.keys()[i]][idxI] = 1
@@ -495,8 +520,10 @@ def overlaps(G, window):
 def nice_table_from_analysis(ana):
     """yields a nicely readable string that contains the information about
     the performance of that sorting"""
-    rval = "GT ID  - FU ID |    KS    OS    FS    TP   TPO   FPA  FPAE  FPAO FPAOE    FN   FNO    FP\n"
-    format_str = "%6s -%6s | %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d\n"
+    rval = "GT ID  - FU ID |    KS    OS    FS    TP   TPO   FPA  FPAE  FPAO
+    FPAOE    FN   FNO    FP\n"
+    format_str = "%6s -%6s | %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d
+    %5d\n"
     for i in xrange(len(ana['table']) - 1):
         rval = ''.join([rval, format_str % tuple(ana['table'][i + 1][0:14])])
     return rval
@@ -506,9 +533,11 @@ def csv_from_analysis(ana, header=True):
     """yields a string that can be stored as a .csv file"""
     rval = ""
     if header:
-        rval = "GT ID  , FU ID ,    KS,    OS,    FS,    TP,   TPO,   FPA,  FPAE,  FPAO, FPAOE,    FN,   FNO,    FP\n"
+        rval = "GT ID  , FU ID ,    KS,    OS,    FS,    TP,   TPO,   FPA,
+        FPAE,  FPAO, FPAOE,    FN,   FNO,    FP\n"
 
-    format_str = "%6s,%6s,%5d, %5d, %5d, %5d, %5d, %5d, %5d, %5d, %5d, %5d, %5d, %5d\n"
+    format_str = "%6s,%6s,%5d, %5d, %5d, %5d, %5d, %5d, %5d, %5d, %5d, %5d,
+    %5d, %5d\n"
     for i in xrange(len(ana['table']) - 1):
         rval = ''.join([rval, format_str % tuple(ana['table'][i + 1][0:14])])
     return rval
@@ -520,19 +549,355 @@ def print_nice_table(ret):
 ##--- MAIN
 
 if __name__ == '__main__':
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     #===========================================================================
     # from pydevd import set_pm_excepthook
     # set_pm_excepthook()
     #===========================================================================
-    G = {'0':sp.array([1, 100, 200, 301, 400]), 1:sp.array([50, 150, 250, 303, 350])}
+    G = {'0':sp.array([1, 100, 200, 301, 400]),
+         1:sp.array([50, 150, 250, 303, 350])}
 
-    E = {0:sp.array([1, 100, 200, 305, 307]), 1:sp.array([50, 150, 250, 590, 550, 648, 720])}
+    E = {0:sp.array([1, 100, 200, 305, 307]),
+         1:sp.array([50, 150, 250, 590, 550, 648, 720])}
 
     ret = align_spike_trains(G, E, max_shift=2, max_jitter=12)
     from plot import P, spike_trains
 
     fig = P.figure(facecolor='white')
-    spike_trains(G, spiketrains2=E, alignment=ret['alignment'], label1=ret['GL'], label2=ret['EL'], plot_handle=fig,
+    spike_trains(G, spiketrains2=E, alignment=ret['alignment'],
+                 label1=ret['GL'], label2=ret['EL'], plot_handle=fig,
                  samples_per_second=16000)
     print 'Done Plot 0.'
     print ret['alignment']

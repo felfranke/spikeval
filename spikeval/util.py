@@ -6,9 +6,10 @@
 # 2011-09-28
 #
 
-"""tools for spike train evaluation"""
+"""general tools for dictionary and array handling"""
 __author__ = 'Philipp Meier <pmeier82 at googlemail dot com>'
 __docformat__ = 'restructuredtext'
+__all__ = ['dict_list2arr', 'dict_arrsort']
 
 
 ##---IMPORTS
@@ -18,10 +19,11 @@ import scipy as sp
 
 ##---FUNCTIONS
 
-def dict_list_to_ndarray(in_dict):
+def dict_list2arr(in_dict):
     """converts all lists in a dictionary to `ndarray`.
 
-    If there are instances of dict found as values, this function will be applied recursively.
+    If there are instances of dict found as values, this function will be
+    applied recursively.
 
     :Parameters:
         in_dict : dict
@@ -32,14 +34,14 @@ def dict_list_to_ndarray(in_dict):
             if isinstance(in_dict[k], list):
                 in_dict[k] = sp.asanyarray(in_dict[k])
             elif isinstance(in_dict[k], dict):
-                dict_list_to_ndarray(in_dict[k])
+                dict_list2arr(in_dict[k])
             else:
                 pass
     finally:
         return in_dict
 
 
-def dict_sort_ndarrays(in_dict):
+def dict_arrsort(in_dict):
     """sort all arrays in a dictionary"""
 
     try:

@@ -19,7 +19,7 @@ print find_packages()
 
 if __name__ == "__main__":
     setup(name="spikeval",
-          version='0.1.0',
+          version='0.6.0',
           packages=find_packages(),
           include_package_data=True,
           install_requires=[

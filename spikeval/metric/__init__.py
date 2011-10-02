@@ -13,4 +13,4 @@ __docformat__ = 'restructuredtext'
 
 ##---IMPORTS
 
-from . import alignment
+from .alignment import *

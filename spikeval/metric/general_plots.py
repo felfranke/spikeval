@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# spikeval - evalplots.py
+# spikeval - general_plots.py
 #
 # Philipp Meier <pmeier82 at googlemail dot com>
 # 2011-09-29
@@ -9,6 +9,7 @@
 """plots for evaluation"""
 __author__ = 'Philipp Meier <pmeier82 at googlemail dot com>'
 __docformat__ = 'restructuredtext'
+__all__ = []
 
 
 ##--- IMPORTS
@@ -21,7 +22,7 @@ from scipy.io import loadmat
 import plot
 
 
-##--- FUNCTIONS
+##---FUNCTIONS
 
 def do_plotting(save_dir, data_file, events, delta_shift, name='none'):
     """produces all plots to the desired dir for the passed data
@@ -58,7 +59,8 @@ def do_plotting(save_dir, data_file, events, delta_shift, name='none'):
             arc = loadmat(data_file)
             X = arc['X'].T
 
-            # check the archive since Scipy 0.6 handles matlab files differently then Scipy 0.7!
+            # check the archive since Scipy 0.6 handles matlab files
+            # differently then Scipy 0.7!
             if isinstance(arc['plt'], N.ndarray):
                 # new scipy:
                 cut = arc['plt'][0, 0].templateLengthSamples[0, 0]
@@ -67,7 +69,8 @@ def do_plotting(save_dir, data_file, events, delta_shift, name='none'):
                 # old scipy on tairach:
                 cut = arc['plt'].templateLengthSamples
                 srate = arc['plt'].sampleRate
-                # add second dimension on tairach since the old scipy loads 1D arrays
+                # add second dimension on tairach since the old scipy loads
+                # 1D arrays
                 X = N.atleast_2d(X)
 
             NC = arc['C']
@@ -142,7 +145,8 @@ def plot_spiketrain(save_dir, events, name='none', srate=32000):
 def plot_waveforms(save_dir, spikes, name='none', cut=60):
     """produces plots of waveforms
 
-    There will be one plot per unit and one plot with all units, each plot just
+    There will be one plot per unit and one plot with all units,
+    each plot just
     stacks the extracted spike waveforms (concatenated over the channels).
 
     :Parameters:
@@ -198,7 +202,8 @@ def plot_clustering(save_dir, spikes, name='none', NC=None):
     """produces plots visualizing the clustering
 
     There will be one plot showing the clustering of units (scatter plot using
-    the first two principal components). The initial clustering is preserved as
+    the first two principal components). The initial clustering is preserved
+     as
     colorization in the projected data.
 
     Also there will be a plot showing the projection of each cluster pairing
@@ -222,8 +227,9 @@ def plot_clustering(save_dir, spikes, name='none', NC=None):
     # produce scatter plots
     for pc in [(0, 1), (2, 3)]:
         # setup
-        fname = join(save_dir, ''.join([name, '_scatter-%s%s' %
-                                              (pc[0] + 1, pc[1] + 1)]))
+        fname = join(save_dir,
+                     ''.join([name, '_scatter-%s%s' % (pc[0] + 1,
+                                                       pc[1] + 1)]))
         plot.clusters(
             pca_data,
             data_dim=pc,
@@ -237,7 +243,6 @@ def plot_clustering(save_dir, spikes, name='none', NC=None):
     # CLUSTER CENTER PROJECTIONS
     fname = join(save_dir, ''.join([name, '_projection']))
     plot.cluster_projections(data, show=0, filename=fname)
-
 
 ##--- MAIN
 
