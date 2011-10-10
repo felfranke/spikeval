@@ -7,8 +7,4 @@
 #
 
 """spike sorting evaluation package"""
-__author__ = 'Philipp Meier <pmeier82 at googlemail dot com>'
 __docformat__ = 'restructuredtext'
-
-
-##---IMPORTS

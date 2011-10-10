@@ -3,14 +3,12 @@
 # spikeval - alignment_metric
 #
 # Felix Franke <felfranke@googlemail.com>
-# Philipp Meier <pmeier82 at googlemail dot com>
 # 2011-09-28
 #
 
 
 """spike train alignment metric"""
 
-__author__ = 'Philipp Meier <pmeier82 at googlemail dot com>'
 __docformat__ = 'restructuredtext'
 __all__ = [
     'align_spike_trains',
@@ -520,10 +518,8 @@ def overlaps(G, window):
 def nice_table_from_analysis(ana):
     """yields a nicely readable string that contains the information about
     the performance of that sorting"""
-    rval = "GT ID  - FU ID |    KS    OS    FS    TP   TPO   FPA  FPAE  FPAO
-    FPAOE    FN   FNO    FP\n"
-    format_str = "%6s -%6s | %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d
-    %5d\n"
+    rval = "GT ID  - FU ID |    KS    OS    FS    TP   TPO   FPA  FPAE  FPAO  FPAOE    FN   FNO    FP\n"
+    format_str = "%6s -%6s | %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d\n"
     for i in xrange(len(ana['table']) - 1):
         rval = ''.join([rval, format_str % tuple(ana['table'][i + 1][0:14])])
     return rval
@@ -533,11 +529,9 @@ def csv_from_analysis(ana, header=True):
     """yields a string that can be stored as a .csv file"""
     rval = ""
     if header:
-        rval = "GT ID  , FU ID ,    KS,    OS,    FS,    TP,   TPO,   FPA,
-        FPAE,  FPAO, FPAOE,    FN,   FNO,    FP\n"
+        rval = "GT ID  , FU ID ,    KS,    OS,    FS,    TP,   TPO,   FPA,   FPAE,  FPAO, FPAOE,    FN,   FNO,    FP\n"
 
-    format_str = "%6s,%6s,%5d, %5d, %5d, %5d, %5d, %5d, %5d, %5d, %5d, %5d,
-    %5d, %5d\n"
+    format_str = "%6s,%6s,%5d, %5d, %5d, %5d, %5d, %5d, %5d, %5d, %5d, %5d, %5d, %5d\n"
     for i in xrange(len(ana['table']) - 1):
         rval = ''.join([rval, format_str % tuple(ana['table'][i + 1][0:14])])
     return rval

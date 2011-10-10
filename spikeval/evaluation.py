@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# eval - evaluation_base.py
+# spikeval - evaluation_base.py
 #
 # Philipp Meier - <pmeier82 at gmail dot com>
 # 2011-08-16

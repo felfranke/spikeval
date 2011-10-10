@@ -6,8 +6,7 @@
 # 2011-09-28
 #
 
-"""general tools for dictionary and array handling"""
-__author__ = 'Philipp Meier <pmeier82 at googlemail dot com>'
+"""general utility/tools for dictionary and array handling"""
 __docformat__ = 'restructuredtext'
 __all__ = ['dict_list2arr', 'dict_arrsort']
 
