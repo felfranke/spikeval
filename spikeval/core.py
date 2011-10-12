@@ -17,7 +17,7 @@ __docformat__ = 'restructuredtext'
 import os
 import scipy as sp
 # django orm
-from somewhere import Record
+from somewhere import Record, EvaluationResults
 # evaluation
 from metric.alignment_old import align_spike_trains as eval_metric
 from metric.general_plots import do_plotting
@@ -72,7 +72,7 @@ def check_record(key, log=dummy_log):
 
     # inits
     log(1, 'starting record check for key=%d' % key)
-    rec = Record.get(id=key)
+    rec = Record(id=key)
     # XXX: check calling syntax/names!!
     gt_file_path = rec.groundtruth.path
     gt = None
@@ -99,10 +99,7 @@ def check_record(key, log=dummy_log):
         assert srate.ndim == 0
         assert 'data' in rd
         raw_data = rd['data']
-        assert isinstance(raw_data, sp.ndarray)
-        assert raw_data.ndim == 2
-        assert raw_data.shape[0] > raw_data.shape[1]
-        log(1, 'rd_file passed all checks')
+
         # TODO: more checks?
 
         rec.verified = True
@@ -140,8 +137,7 @@ def check_record(key, log=dummy_log):
 #...
 def eval_core(path_ev, path_rd, path_gt, key, temp_dir='/tmp', log=dummy_log):
     """core function to produce one evaluation result based on one set of
-    data,
-    ground truth spike train and estimated spike train.
+    data, ground truth spike train and estimated spike train.
 
     :type path_ev: str
     :param path_ev: path to the file holding the estimated spike train
@@ -162,13 +158,15 @@ def eval_core(path_ev, path_rd, path_gt, key, temp_dir='/tmp', log=dummy_log):
     :raises: EvalError
     """
 
+    # inits
+    rval = EvaluationResults(id=Key)
+
     # read in evaluation file
-    log('*-reading files')
-    train = read_file(osp.join(data_dir, ev_file))
-    log('evaluation file read!')
-    benchmark = gt_file
-    log("gtfile:")
-    log(gt_file)
+    log(1,'*-reading files')
+    ev = read_gdf( path_ev)
+    log(1,'evaluation file read!')
+    bm = read_hdf5(path_rd)
+    log(1,'gtfile: %s' %gt_file)
     log(" benchmark: ")
     log(benchmark)
     bm_filename = osp.join(base_dir, benchmark)
