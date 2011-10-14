@@ -1,0 +1,1 @@
+Search.setIndex({objects:{},terms:{sort:0,index:0,search:0,welcom:0,evalu:0,spikev:0,modul:0,spike:0,indic:0,websit:0,content:0,packag:0,host:0,thi:0,tabl:0,document:0,page:0,backend:0},objtypes:{},titles:["Welcome to spikeval&#8217;s documentation!"],objnames:{},filenames:["index"]})
