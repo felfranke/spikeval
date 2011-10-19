@@ -7,7 +7,6 @@
 #
 
 """spike sorting metrics for evaluation"""
-__author__ = 'Philipp Meier <pmeier82 at googlemail dot com>'
 __docformat__ = 'restructuredtext'
 
 

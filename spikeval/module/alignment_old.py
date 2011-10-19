@@ -1,24 +1,16 @@
 # -*- coding: utf-8 -*-
 #
-# spikeval - alignment_metric
+# spikeval - module/alignment_old.py
 #
 # Felix Franke <felfranke@googlemail.com>
-# 2011-09-28
+# sometime in 2010
 #
 
-
 """spike train alignment module"""
-
 __docformat__ = 'restructuredtext'
-__all__ = [
-    'align_spike_trains',
-    'similarity',
-    'simi',
-    'overlaps',
-    'nice_table_from_analysis',
-    'csv_from_analysis',
-    'print_nice_table',
-]
+__all__ = ['align_spike_trains', 'similarity', 'simi', 'overlaps',
+           'nice_table_from_analysis', 'csv_from_analysis',
+           'print_nice_table']
 
 
 ##--- IMPORTS
@@ -104,8 +96,9 @@ def align_spike_trains(G, E, max_shift=15, max_jitter=6, max_overlap_dist=45):
         maxoverlapdistance : int
             upper bound for the tested overlap distance
             Default=45
+
+    DOC: this documentation needs to be more precise on the return part!!
     """
-    # DOC: this documentation needs to be more precise on the return part!!
 
     # inits and checks
     G = dict_list2arr(G)
@@ -322,7 +315,7 @@ def align_spike_trains(G, E, max_shift=15, max_jitter=6, max_overlap_dist=45):
                     FN[i] += 1
                     # The last thing to do is to check all labels of spikes
                     # in E. Those
-        # which have no label yet are FPs
+                    # which have no label yet are FPs
     for j in xrange(m):
         k2 = E.keys()[j]
         FP[j] = 0
@@ -368,15 +361,13 @@ def align_spike_trains(G, E, max_shift=15, max_jitter=6, max_overlap_dist=45):
                           'True Pos Ovps', #
                           'False Pos Assign GT',
                           # Number of Spikes of Found Unit which are
-                          # assigned to
-                          # to a non-associated Unit
-                          'False Pos Assign Found', #
+                          # assigned to a non-associated Unit
+                          'False Pos Assign Found',
                           'False Pos Ovps GT', # FPAO
-                          #
                           'FPs Assign Ovps Found', # FPAO_E
-                          'False Neg', #
-                          'False Neg Overlaps', #
-                          'False Pos'])              #
+                          'False Neg',
+                          'False Neg Overlaps',
+                          'False Pos'])
 
     # Build Table with one row for every assignment of two spike trains and
     # one row
@@ -515,25 +506,35 @@ def overlaps(G, window):
 #
 #    if alignment is not None:
 
-def nice_table_from_analysis(ana):
+HSTRS = ['GT ID', 'FU ID', 'KS', 'OS', 'FS', 'TP', 'TPO', 'FPAE', 'FPAO',
+         'FPAOE', 'FN', 'FNO', 'FP']
+
+def nice_table_from_analysis(ana, space=6):
     """yields a nicely readable string that contains the information about
     the performance of that sorting"""
-    rval = "GT ID  - FU ID |    KS    OS    FS    TP   TPO   FPA  FPAE  FPAO  FPAOE    FN   FNO    FP\n"
-    format_str = "%6s -%6s | %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d\n"
-    for i in xrange(len(ana['table']) - 1):
-        rval = ''.join([rval, format_str % tuple(ana['table'][i + 1][0:14])])
+
+    rval = HSTRS[0].center(space) + ' - ' + HSTRS[1].center(space) + ' | '
+    form = '%{}s - %{}s | '.format(space, space)
+    for item in HSTRS[2:]:
+        rval += item.center(6) + ' '
+        form += '%{}d '.format(space)
+    rval += '\n'
+    form += '\n'
+    for i in xrange(1, len(ana['table'])):
+        rval += form % tuple(ana['table'][i][0:14])
     return rval
 
 
-def csv_from_analysis(ana, header=True):
+def csv_from_analysis(ana, header=True, space=6):
     """yields a string that can be stored as a .csv file"""
-    rval = ""
-    if header:
-        rval = "GT ID  , FU ID ,    KS,    OS,    FS,    TP,   TPO,   FPA,   FPAE,  FPAO, FPAOE,    FN,   FNO,    FP\n"
 
-    format_str = "%6s,%6s,%5d, %5d, %5d, %5d, %5d, %5d, %5d, %5d, %5d, %5d, %5d, %5d\n"
-    for i in xrange(len(ana['table']) - 1):
-        rval = ''.join([rval, format_str % tuple(ana['table'][i + 1][0:14])])
+    rval = ''
+    if header:
+        rval += ''.join(map(str.center, HSTRS, len(HSTRS) * [space])) + '\n'
+    form = ', '.join(['%{}s'.format(space)] * 2 + ['%{}d'] * (len(HSTRS)) - 2)
+    form += '\n'
+    for i in xrange(1, len(ana['table'])):
+        rval += form % tuple(ana['table'][i][0:14])
     return rval
 
 
@@ -543,343 +544,6 @@ def print_nice_table(ret):
 ##--- MAIN
 
 if __name__ == '__main__':
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    #===========================================================================
-    # from pydevd import set_pm_excepthook
-    # set_pm_excepthook()
-    #===========================================================================
     G = {'0':sp.array([1, 100, 200, 301, 400]),
          1:sp.array([50, 150, 250, 303, 350])}
 
@@ -896,7 +560,6 @@ if __name__ == '__main__':
     print 'Done Plot 0.'
     print ret['alignment']
 
-#===============================================================================
 #    G = {}
 #    G['0'] = sp.array([40, 80, 90, 170, 400])
 #    G[1] = sp.array([42, 150, 180, 190, 350])
@@ -907,7 +570,7 @@ if __name__ == '__main__':
 #    E[1] = sp.array([40, 90, 150, 180, 190, 250, 348, 420])
 #
 #    #ret = align_spike_trains(G, E, maxshift=2, maxjitter=2)
-#   # print ret
+#    # print ret
 #    import common.plot as plot
 #
 #    #print 'lala 1'
@@ -926,11 +589,15 @@ if __name__ == '__main__':
 #    E[4] = sp.array([37, 79, 96, 149, 201, 405])
 #    E['Multi Unit 2'] = sp.array([10, 20, 30, 40, 50, 60, 60, 170])
 #
-#    ret = align_spike_trains(G, E, maxshift=2, maxjitter=2, maxoverlapdistance=5)
+#    ret = align_spike_trains(G, E, maxshift=2, maxjitter=2,
+#                             maxoverlapdistance=5)
 #    print ret
 #
 #    from plot import plt, spiketrains
+#
 #    fig = plt.figure(facecolor='white')
-#    spike_trains(G, spiketrains2=E, alignment=ret['alignment'], label1=ret['GL'], label2=ret['EL'], plot_handle=fig, samples_per_second=16000)
+#    spike_trains(G, spiketrains2=E, alignment=ret['alignment'],
+#                 label1=ret['GL'], label2=ret['EL'], plot_handle=fig,
+#                 samples_per_second=16000)
 #    print 'Done Plot 2.'
-#===============================================================================
+#
