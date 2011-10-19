@@ -104,4 +104,5 @@ if __name__ == '__main__':
     print
     print l
     print s
+    print
     print l.get_content()

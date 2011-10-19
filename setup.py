@@ -11,22 +11,22 @@ __author__ = 'Philipp Meier <pmeier82 at googlemail dot com>'
 __docformat__ = 'restructuredtext'
 
 from setuptools import setup, find_packages
+import spikeval
 
 DESC_TITLE = "SpikeEval : systematic evaluation of spike sorting"
 DESC_LONG = ''.join([DESC_TITLE, '\n\n', open('README', 'r').read()])
 
-print find_packages()
-
 if __name__ == "__main__":
     setup(name="spikeval",
-          version='0.6.0',
+          version=spikeval.__version__,
           packages=find_packages(),
           include_package_data=True,
           install_requires=[
               'scipy>=0.7.0',
               'matplotlib>=0.99.3',
-              'spikeplot>=0.1.0'
-          ],
+              'spikeplot>=0.1.0',
+              'tables>=2.1.2',
+              ],
           requires=[],
 
           # metadata for upload to PyPI
@@ -39,12 +39,14 @@ if __name__ == "__main__":
           license="EUPL v1.1",
           url='http://ni.tu-berlin.de',
           classifiers=[
-              'Development Status :: 3 - Alpha',
+              'Development Status :: 4 - Beta',
               'Intended Audience :: Science/Research',
-              'License :: OSI Approved :: European Union Public '
-              'Licence 1.1 (EUPL 1.1)',
+              'Intended Audience :: Developers',
+              'Intended Audience :: Education',
+              'License :: OSI Approved :: MIT License',
               'Natural Language :: English',
               'Operating System :: OS Independent',
               'Programming Language :: Python',
-              'Topic :: Scientific/Engineering :: Bio-Informatics'
-          ])
+              'Topic :: Scientific/Engineering :: Bio-Informatics',
+              'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
+              ])

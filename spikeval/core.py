@@ -57,8 +57,4 @@ def eval_core(raw_data, sts_gt, sts_ev, metric_cls, log=sys.stdout):
 
 ##--- MAIN
 if __name__ == '__main__':
-    sorting_eval(r'/www/eval/application/python',
-                 r'021_C_Easy1_noise01.gdf',
-                 r'/www/eval/groundtruth',
-                 r'C_Easy1_noise005_groundtruth.mat',
-                 r'/www/eval/application/python/results')
+    pass
