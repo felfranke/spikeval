@@ -6,18 +6,11 @@
 # 2011-09-29
 #
 
-"""spike sorting metrics for evaluation"""
+"""modules for evaluation"""
 __docformat__ = 'restructuredtext'
 
 
 ##---CONSTANTS
 
-METRICS = {}
-
 
 ##---IMPORTS
-
-
-
-##---UPDATE
-

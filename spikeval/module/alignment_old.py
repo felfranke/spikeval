@@ -96,9 +96,8 @@ def align_spike_trains(G, E, max_shift=15, max_jitter=6, max_overlap_dist=45):
         maxoverlapdistance : int
             upper bound for the tested overlap distance
             Default=45
-
-    DOC: this documentation needs to be more precise on the return part!!
     """
+    # DOC: this documentation needs to be more precise on the return part!!
 
     # inits and checks
     G = dict_list2arr(G)
@@ -370,13 +369,11 @@ def align_spike_trains(G, E, max_shift=15, max_jitter=6, max_overlap_dist=45):
                           'False Pos'])
 
     # Build Table with one row for every assignment of two spike trains and
-    # one row
-    # for every unassigned spike train. Problem TODO: The number of false
-    # positive assignments for
-    # one of the assignment rows has to be the sum of the individual
-    # assignement
-    # errors. ???? ->This way an assignment error counts as 2 errors (one FP
-    # and one FN).
+    # one row for every unassigned spike train.
+    # TODO: The number of false positive assignments for one of the assignment
+    # rows has to be the sum of the individual assignement errors.
+    # ???? ->This way an assignment error counts as 2 errors (one FP and one
+    # FN).
 
     remaining_found_units = sp.ones(m)
     # Build the assignment rows and unassigned ground truth spike train rows

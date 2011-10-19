@@ -43,11 +43,12 @@ def eval_core(raw_data, sts_gt, sts_ev, metric_cls, log=sys.stdout):
 
     ## inits and checks
     metric = None
-    logger = Logger(log)
+    logger = Logger.get_logger(log)
 
     # start module
     try:
         metric = metric_cls(raw_data, sts_gt, sts_ev, logger)
+        metric.apply()
     except Exception, ex:
         logger.log_delimiter_line()
         logger.log(str(ex))

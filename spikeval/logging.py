@@ -41,11 +41,12 @@ class Logger(object):
 
         # inits and checks
         if not self.is_file_like(file_like):
-            raise IOError('file_like must be implement the file interface!')
+            raise ValueError('file_like must implement the file interface!')
         self._core = file_like
 
     def __del__(self):
         self._core.flush()
+        # XXX: should we close self._core?!
 
     def __getattr__(self, attr):
         try:
@@ -90,6 +91,20 @@ class Logger(object):
         if len(IFILE_METHODS) == 0:
             return False
         return all([hasattr(obj, method) for method in IFILE_METHODS])
+
+    @staticmethod
+    def get_logger(obj):
+        """produce Logger from obj, return obj if it is a Logger already
+
+        :type obj: Logger or file_like
+        :param obj: object to turn into a Logger
+        :raise ValueError: if obj is not implementing the file interface
+        """
+
+        if isinstance(obj, Logger):
+            return obj
+        else:
+            return Logger(obj)
 
 ##--- MAIN
 
