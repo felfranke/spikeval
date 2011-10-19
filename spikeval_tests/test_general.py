@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# spikeval - tests/test_general.py
+# spikeval_tests - test_general.py
 #
 # Philipp Meier - <pmeier82 at gmail dot com>
 # 2011-10-11

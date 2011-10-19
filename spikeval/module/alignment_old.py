@@ -7,7 +7,7 @@
 #
 
 
-"""spike train alignment metric"""
+"""spike train alignment module"""
 
 __docformat__ = 'restructuredtext'
 __all__ = [
