@@ -17,6 +17,7 @@ import unittest
 import scipy as sp
 from spikeval.module.base_module import *
 from spikeval.module.result_types import *
+from spikeval.module.mod_plot_data import ModDataPlot
 
 
 ##---CLASSES
@@ -52,11 +53,14 @@ class TestModule(unittest.TestCase):
                        1:sp.array(range(20, 1000, 100)) + shift,
                        3:sp.array([222, 444, 666, 888]) + shift}
 
-    def test_creation(self):
+    def test_general_plotscreation(self):
         """test for scipy"""
 
-        self.mod = MyTestModule(self.raw_data, self.sts_gt, self.sts_ev,
-                                sys.stdout, srate=32000.0)
+        self.mod = ModDataPlot(
+            self.raw_data,
+            self.sts_gt,
+            self.sts_ev,
+            sys.stdout,)
 
 if __name__ == '__main__':
     unittest.main()

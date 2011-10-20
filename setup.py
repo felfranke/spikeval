@@ -28,6 +28,7 @@ if __name__ == "__main__":
               'tables>=2.1.2',
               'texttable>=0.8',
               'PIL>=1.1.7',
+              'mdp>=3.1',
               ],
           requires=[],
 

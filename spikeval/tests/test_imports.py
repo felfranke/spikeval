@@ -56,5 +56,12 @@ class TestImports(unittest.TestCase):
 
         self.assertGreaterEqual(Image.VERSION, '1.1.7')
 
+    def test_mdp(self):
+        """test for modular toolkit for data processing"""
+
+        import mdp
+
+        self.assertGreaterEqual(mdp.__version__, '3.1')
+
 if __name__ == '__main__':
     unittest.main()
