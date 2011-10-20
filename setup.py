@@ -26,8 +26,9 @@ if __name__ == "__main__":
               'matplotlib>=0.99.3',
               'spikeplot>=0.1.0',
               'tables>=2.1.2',
-              'texttable>=0.8'
-          ],
+              'texttable>=0.8',
+              'PIL>=1.1.7',
+              ],
           requires=[],
 
           # metadata for upload to PyPI

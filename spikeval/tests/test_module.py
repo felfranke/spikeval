@@ -12,13 +12,30 @@ __docformat__ = 'restructuredtext'
 
 ##---IMPORTS
 
+import sys
 import unittest
 import scipy as sp
+from spikeval.module.base_module import BaseModule
+from spikeval.module.result_types import (MRScalar, MRTable, MRDict,
+                                          MRPlot)
 
+
+##---CLASSES
+
+class MyTestModule(BaseModule):
+    """test module"""
+
+    RESULT_TYPES = [MRScalar, MRTable, MRDict, MRPlot]
+
+    def _check_raw_data(self, raw_data):
+        pass
+
+    def _check_sts(self, sts):
+        pass
 
 ##---TESTS
 
-class TestBaseModule(unittest.TestCase):
+class TestModule(unittest.TestCase):
     """test case for package imports"""
 
     def setUp(self):
@@ -32,28 +49,13 @@ class TestBaseModule(unittest.TestCase):
         self.sts_ev = {0:sp.array(range(100, 1000, 100)) + shift,
                        1:sp.array(range(20, 1000, 100)) + shift,
                        3:sp.array([222, 444, 666, 888]) + shift}
+        self.mod = None
 
-    def test_module(self):
+    def test_creation(self):
         """test for scipy"""
 
-        import scipy
-
-        self.assertGreaterEqual(scipy.__version__, '0.7.0')
-
-    def test_tables(self):
-        """test for tables"""
-
-        import tables
-
-        self.assertGreaterEqual(tables.__version__, '2.1.2')
-
-    def test_matplotlib(self):
-        """test for matplotlib"""
-
-        import matplotlib
-
-        self.assertGreaterEqual(matplotlib.__version__, '0.99.3')
-        self.assertEqual(matplotlib.validate_backend('agg'), 'agg')
+        self.mod = MyTestModule(self.raw_data, self.sts_gt, self.sts_ev,
+                                sys.stdout, srate=32000.0)
 
 if __name__ == '__main__':
     unittest.main()

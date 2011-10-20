@@ -17,7 +17,7 @@ import sys
 import scipy as sp
 from .logging import Logger
 from .module.alignment_old import align_spike_trains as eval_metric
-from .module.general_plots import do_plotting
+from .module.mod_plot_data import do_plotting
 
 
 ##---FUNCTIONS

@@ -8,20 +8,16 @@
 
 """result types for module results"""
 __docformat__ = 'restructuredtext'
-__all__ = ['ResultError']
-
+__all__ = ['ResultError', 'ModuleResult', 'MRScalar', 'MRTable', 'MRDict',
+           'MRPlot']
 
 
 ##---IMPORTS
 
 import scipy as sp
 from texttable import Texttable
-#from spikeplot import p
-
-
-##---FUNCTIONS
-
-
+import Image
+import spikeplot
 
 
 ##---CLASSES
@@ -38,6 +34,8 @@ class ModuleResult(object):
     types. Each result type implements this interface and provides methods
     to presented itself in various forms.
     """
+
+    BASE = object
 
     def __init__(self):
         self._value = None
@@ -74,6 +72,8 @@ class MRScalar(ModuleResult):
 class MRTable(ModuleResult):
     """two dimensional table/matrix result"""
 
+    BASE = sp.ndarray
+
     def __init__(self, value, header=None):
         """
         :type value: ndarray
@@ -109,6 +109,8 @@ class MRTable(ModuleResult):
 class MRDict(ModuleResult):
     """dictionary result"""
 
+    BASE = dict
+
     def __init__(self, init_values):
         """
         :type init_values: list
@@ -128,12 +130,70 @@ class MRDict(ModuleResult):
         return tt.draw()
 
 
-class MRFigure(ModuleResult):
-    """figure result"""
+class MRPlot(ModuleResult):
+    """plot result, stored as PIL :Image:"""
 
-    # TODO: IMPLEMENT
+    BASE = Image.Image
 
-    pass
+    def __init__(self, input_data):
+        """
+        :type input_data: matplotlib.Figure or Image or ndarray
+        :param input_data: the input data to generate the :Image: instance
+            from.
+        """
+
+        is_mpl = isinstance(input_data, spikeplot.plt.Figure)
+        is_img = isinstance(input_data, Image.Image)
+        is_nda = isinstance(input_data, sp.ndarray)
+        if not (is_mpl ^ is_img ^ is_nda):
+            raise TypeError('input_data must one of mpl.Figure, Image '
+                            'or sp.ndarray')
+        im = None
+        if is_img:
+            im = input_data
+        if is_mpl:
+            im = MRPlot.img_from_fig(input_data)
+        if is_nda:
+            im = MRPlot.img_from_rgb(input_data)
+        self._value = im
+
+    def _str_val(self):
+        return 'Image%s' % str(self.value.size)
+
+    @staticmethod
+    def img_from_rgb(rgb):
+        """produce :Image: instance from 'RGB' ndarray
+
+        :type rgb: ndarray
+        :param rgb: ndarray with shape x,y,3 for rgb or x,y,4 for rgba
+            mode
+        :return: :Image: instance of the :rgb:
+        """
+
+        if not isinstance(rgb, sp.ndarray):
+            raise TypeError('rgb must be an sp.ndarray')
+        if rgb.ndim != 3:
+            raise ValueError('rgb.ndim !=3')
+        if rgb.shape[2] != 3:
+            raise ValueError('rgb.shape[2] != 3')
+        return Image.frombuffer('RGB', rgb.shape[:2], rgb, 'raw', 'RGB', 0, 1)
+
+    @staticmethod
+    def img_from_fig(fig):
+        """produce :Image: instance from :fig:
+
+        :type fig: matplotlib.pyplot.Figure
+        :param fig: input :Figure: instance
+        :return: :Image: instance of the canvas of :fig:
+        """
+
+        if not isinstance(fig, spikeplot.plt.Figure):
+            raise TypeError('fig must be a mpl.Figure')
+        fig.canvas.draw()
+        rgb = fig.canvas.tostring_rgb()
+        rgb = sp.fromstring(rgb, dtype=sp.uint8)
+        rgb.shape = map(int, fig.bbox.bounds[2:]) + [3]
+        return MRPlot.img_from_rgb(rgb)
 
 ##---MAIN
 
@@ -163,4 +223,12 @@ if __name__ == '__main__':
 
     res = MRDict(zip(range(10), map(chr, range(32, 45))))
     print res
+    print
+
+    fig = spikeplot.mcdata(sp.randn(1000, 2))
+    res = MRPlot(fig)
+    print res
+    print
+
+    print res.BASE
     print

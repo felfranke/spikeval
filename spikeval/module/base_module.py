@@ -8,14 +8,14 @@
 
 """module base class for implementing evaluation modules"""
 __docformat__ = 'restructuredtext'
-__all__ = ['BaseModule']
-
+__all__ = ['BaseModule', 'ModuleInputError', 'ModuleExecutionError']
 
 
 ##---IMPORTS
 
 import scipy as sp
 from ..logging import Logger
+from .result_types import ModuleResult
 
 
 ##---class
@@ -35,8 +35,8 @@ class BaseModule(object):
     like the application of a single metric or the generation of plots.
 
     All modules must implement this interface to work in the evaluation
-    framework! To implement a new module subclass BaseModule and implement
-    all :self._check_*: methods.
+    framework! To implement a new module, subclass BaseModule, implement all
+        :self._check_*: methods and set the :RESULT_TYPES: as a list of
 
     :self._check_raw_data: validates the raw data, and should raise an
         ModuleInputError if the raw data does not validate
@@ -76,6 +76,13 @@ class BaseModule(object):
         self.sts_ev = sts_ev
         self.params = params
         self.result = []
+
+        # check RESULT_TYPES
+        if not all(map(issubclass, self.RESULT_TYPES,
+                       len(self.RESULT_TYPES) * [ModuleResult])):
+            raise ModuleExecutionError('not all result types are not derived '
+                                       'from :ModuleResult\n%s' %
+                                       self.RESULT_TYPES)
 
     def check_raw_data(self, raw_data):
         """check if :raw_data: is valid raw data
@@ -119,7 +126,7 @@ class BaseModule(object):
     def apply(self):
         pass
 
-##---MAIN
+    ##---MAIN
 
-if __name__ == '__main__':
-    pass
+    if __name__ == '__main__':
+        pass

@@ -49,5 +49,12 @@ class TestImports(unittest.TestCase):
 
         self.assertGreaterEqual(texttable.__version__, '0.8')
 
+    def test_pil_image(self):
+        """test for PIL Image"""
+
+        import Image
+
+        self.assertGreaterEqual(Image.VERSION, '1.1.7')
+
 if __name__ == '__main__':
     unittest.main()
