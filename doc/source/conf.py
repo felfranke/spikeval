@@ -56,7 +56,7 @@ release = '0.6.1'
 language = 'en'
 
 # There are two options for replacing |today|: either, you set today to some
-# non-false value, then it is used:
+# non-false _value, then it is used:
 #today = ''
 # Else, today_fmt is used as the format for a strftime call.
 #today_fmt = '%B %d, %Y'
@@ -80,7 +80,7 @@ add_module_names = True
 show_authors = True
 
 # The default language to highlight source code in. The default is 'python'.
-# The value should be a valid Pygments lexer name, see Showing code examples for more details.
+# The _value should be a valid Pygments lexer name, see Showing code examples for more details.
 highlight_language = 'python'
 
 # The name of the Pygments (syntax highlighting) style to use.
@@ -159,7 +159,7 @@ html_static_path = ['_static']
 #html_show_copyright = True
 
 # If true, an OpenSearch description file will be output, and all pages will
-# contain a <link> tag referring to it.  The value of this option must be the
+# contain a <link> tag referring to it.  The _value of this option must be the
 # base URL from which the finished HTML is served.
 #html_use_opensearch = ''
 

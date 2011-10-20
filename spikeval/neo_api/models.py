@@ -23,7 +23,7 @@ def_samp_unit = "Hz"
 
 def _find_nearest(array, value):
     """
-    Finds index of the nearest value to the given value in the given array.
+    Finds index of the nearest _value to the given _value in the given array.
     """
     idx = (np.abs(array - float(value))).argmin()
     return idx
@@ -113,7 +113,7 @@ class BaseInfo(models.Model):
         used as default for Events, Epochs etc. which have a fixed small
         non-significant size
         """
-        return 0 
+        return 0
 
     @property
     def current_state(self):
@@ -409,13 +409,13 @@ len(dataslice)))
     def is_alone(self):
         """
         Indicates whether to show an object alone, even if it is organized in
-        an AnalogSignalArray. 
+        an AnalogSignalArray.
         """
         return (self.analogsignalarray.count() == 0)
 
     def save(self, *args, **kwargs):
         # override save to keep signal size up to date
-        self.signal_size = len(self.signal) * 24            
+        self.signal_size = len(self.signal) * 24
         super(AnalogSignal, self).save(*args, **kwargs)
 
 

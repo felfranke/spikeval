@@ -324,7 +324,7 @@ def align_spike_trains(G, E, max_shift=15, max_jitter=6, max_overlap_dist=45):
                 FP[j] += 1
 
 
-    # Build return value dictionary
+    # Build return _value dictionary
     rval['scores'] = similarity_matrix
     rval['shifts'] = shift_matrix
     rval['delta_shift'] = delta_shift
