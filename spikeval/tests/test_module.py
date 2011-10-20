@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# tests - test_imports.py
+# tests - test_module.py
 #
 # Philipp Meier - <pmeier82 at gmail dot com>
 # 2011-10-11
@@ -13,14 +13,27 @@ __docformat__ = 'restructuredtext'
 ##---IMPORTS
 
 import unittest
+import scipy as sp
 
 
 ##---TESTS
 
-class TestImports(unittest.TestCase):
+class TestBaseModule(unittest.TestCase):
     """test case for package imports"""
 
-    def test_scipy(self):
+    def setUp(self):
+        """setup input data"""
+
+        self.raw_data = sp.randn(1000, 4)
+        self.sts_gt = {0:sp.array(range(100, 1000, 100)),
+                       1:sp.array(range(20, 1000, 100)),
+                       3:sp.array([222, 444, 666, 888])}
+        shift = 20
+        self.sts_ev = {0:sp.array(range(100, 1000, 100)) + shift,
+                       1:sp.array(range(20, 1000, 100)) + shift,
+                       3:sp.array([222, 444, 666, 888]) + shift}
+
+    def test_module(self):
         """test for scipy"""
 
         import scipy
@@ -41,13 +54,6 @@ class TestImports(unittest.TestCase):
 
         self.assertGreaterEqual(matplotlib.__version__, '0.99.3')
         self.assertEqual(matplotlib.validate_backend('agg'), 'agg')
-
-    def test_texttable(self):
-        """test for texttable"""
-
-        import texttable
-
-        self.assertGreaterEqual(texttable.__version__, '0.8')
 
 if __name__ == '__main__':
     unittest.main()
