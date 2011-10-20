@@ -15,9 +15,8 @@ __docformat__ = 'restructuredtext'
 import sys
 import unittest
 import scipy as sp
-from spikeval.module.base_module import BaseModule
-from spikeval.module.result_types import (MRScalar, MRTable, MRDict,
-                                          MRPlot)
+from spikeval.module.base_module import *
+from spikeval.module.result_types import *
 
 
 ##---CLASSES
@@ -32,6 +31,9 @@ class MyTestModule(BaseModule):
 
     def _check_sts(self, sts):
         pass
+
+    def _check_parameters(self, parameters):
+        return parameters
 
 ##---TESTS
 
@@ -49,7 +51,6 @@ class TestModule(unittest.TestCase):
         self.sts_ev = {0:sp.array(range(100, 1000, 100)) + shift,
                        1:sp.array(range(20, 1000, 100)) + shift,
                        3:sp.array([222, 444, 666, 888]) + shift}
-        self.mod = None
 
     def test_creation(self):
         """test for scipy"""

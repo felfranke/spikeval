@@ -54,7 +54,7 @@ class BaseModule(object):
 
     RESULT_TYPES = []
 
-    def __init__(self, raw_data, sts_gt, sts_ev, log, **params):
+    def __init__(self, raw_data, sts_gt, sts_ev, log, **parameters):
         """
         :type raw_data: ndarray or None
         :param raw_data: raw data as ndarray with [samples, channels]
@@ -64,6 +64,7 @@ class BaseModule(object):
         :param sts_ev: evaluation spike train set
         :type log: Logger or file-like
         :param log: stream to log to
+        :keyword ??: any
         """
 
         # inits and checks
@@ -71,10 +72,10 @@ class BaseModule(object):
         self.check_raw_data(raw_data)
         self.check_sts(sts_gt)
         self.check_sts(sts_ev)
+        self.parameters = self.check_parameters(parameters)
         self.raw_data = raw_data
         self.sts_gt = sts_gt
         self.sts_ev = sts_ev
-        self.params = params
         self.result = []
 
         # check RESULT_TYPES
@@ -118,9 +119,9 @@ class BaseModule(object):
         :return: valid parameters
         """
 
-        return self._check_paramters(parameters)
+        return self._check_parameters(parameters)
 
-    def _check_parameters(self):
+    def _check_parameters(self, parameters):
         raise NotImplementedError
 
     def apply(self):
