@@ -79,10 +79,10 @@ def extract_spikes(data, epochs):
     rval = sp.zeros((ns, tf * nc), dtype=data.dtype)
     for s in xrange(ns):
         for c in xrange(nc):
-            start = max(0, epochs[s, 0])
+            correct_beg = min(0, epochs[s, 0])
             correct_end = max(0, epochs[s, 1] - data.shape[0])
-            rval[s, c * tf + cor_s:(c + 1) * tf - correct_end] =\
-            data[start:epochs[s1] - correct_end, c]
+            rval[s, c * tf - correct_beg:(c + 1) * tf - correct_end] =\
+            data[epochs[s, 0] - correct_beg:epochs[s, 1] - correct_end, c]
     return rval
 
 ##---MAIN

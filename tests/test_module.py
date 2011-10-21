@@ -53,14 +53,17 @@ class TestModule(unittest.TestCase):
                        1:sp.array(range(20, 1000, 100)) + shift,
                        3:sp.array([222, 444, 666, 888]) + shift}
 
-    def test_general_plotscreation(self):
+    def test_general_plots(self):
         """test for scipy"""
 
-        self.mod = ModDataPlot(
+        mod = ModDataPlot(
             self.raw_data,
             self.sts_gt,
             self.sts_ev,
-            sys.stdout,)
+            sys.stdout)
+        mod.apply()
+        mod.result[0].value.show()
+        self.assertEqual(mod.status, 'finalised')
 
 if __name__ == '__main__':
     unittest.main()

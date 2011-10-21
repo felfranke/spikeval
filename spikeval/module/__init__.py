@@ -10,7 +10,15 @@
 __docformat__ = 'restructuredtext'
 
 
-##---CONSTANTS
-
 
 ##---IMPORTS
+
+from base_module import *
+from result_types import *
+
+from mod_plot_data import *
+
+
+##---MODULES
+
+MODULES = [ModDataPlot]

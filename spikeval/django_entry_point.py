@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# spikeval - evaluation_base.py
+# spikeval - django_entry_point.py
 #
 # Philipp Meier - <pmeier82 at gmail dot com>
 # 2011-10-14
@@ -8,13 +8,17 @@
 
 """django specific functions and entry point"""
 __docformat__ = 'restructuredtext'
+__all__ = []
 
 
 ##---IMPORTS
 
-from core import eval_core
-from datafiles import read_gdf, read_hdf5
-from somewhere import Record, EvaluationResults
+import sys
+from .core import eval_core
+from .datafiles import read_gdf, read_hdf5
+from .somewhere import Record, EvaluationResults
+from .logging import Logger
+from .module import MODULES
 
 
 ##---FUNCTIONS
@@ -43,7 +47,7 @@ from somewhere import Record, EvaluationResults
 #recrod.verified_error = "string"
 #
 #return
-def check_record(key, log=dummy_log):
+def check_record(key, log=sys.stdout):
     """checks consistency of (raw_data, ground truth spike train) tuple
 
     :type key: int
@@ -58,29 +62,30 @@ def check_record(key, log=dummy_log):
     """
 
     # inits
-    log(1, 'starting record check for key=%d' % key)
+    logger = Logger.get_logger(log)
+    logger.log('starting record check for key=%d' % key)
     rec = Record(id=key)
     # XXX: check calling syntax/names!!
     gt_file_path = rec.groundtruth.path
     gt = None
-    log(1, 'gt_file_path: %s' % gt_file_path)
+    logger.log('gt_file_path: %s' % gt_file_path)
     rd_file_path = rec.rawdatafile.path
     rd = None
-    log(1, 'rd_file_path: %s' % rd_file_path)
+    logger.log('rd_file_path: %s' % rd_file_path)
 
     try:
         # checking ground truth spike train file -- should be gdf
         gt = read_gdf(gt_file_path)
-        log(1, 'found gt_file: %s' % gt_file_path)
+        logger.log('found gt_file: %s' % gt_file_path)
         for st in gt:
             assert isinstance(st, sp.ndarray)
             assert st.ndim == 1
-        log(1, 'gt_file passed all checks')
+        logger.log('gt_file passed all checks')
         # TODO: more checks?
 
         # checking raw data file -- should be hdf5
         rd = read_hdf5(rd_file_path)
-        log(1, 'found rd_file: %s' % rd_file_path)
+        logger.log('found rd_file: %s' % rd_file_path)
         assert 'sampling_rate' in rd
         srate = rd['sampling_rate']
         assert srate.ndim == 0
@@ -93,11 +98,11 @@ def check_record(key, log=dummy_log):
     except Exception, ex:
         rec.verified = False
         rec.verified_error = str(ex)
-        log(1, 'error during record check: %s' % str(ex))
+        logger.log('error during record check: %s' % str(ex))
 
     # all checks passed
     rec.save()
-    log(1, 'passed record check for key=%d' % key)
+    logger.log('passed record check for key=%d' % key)
     return rec.verfied
 
 #+Interface 2: The user uploads a sorting result. The frontend calls a
@@ -121,7 +126,8 @@ def check_record(key, log=dummy_log):
 #res.log = "bla"
 #res.image = Image
 #...
-def eval_core(path_ev, path_rd, path_gt, key, temp_dir='/tmp', log=dummy_log):
+def eval_core(path_rd, path_ev, path_gt, key, temp_dir='/tmp',
+              log=sys.stdout, **kwargs):
     """core function to produce one evaluation result based on one set of
     data, ground truth spike train and estimated spike train.
 
@@ -138,6 +144,7 @@ def eval_core(path_ev, path_rd, path_gt, key, temp_dir='/tmp', log=dummy_log):
     :type log: func
     :param log: logging function func(level, text), the default prints to fd1
         Default=dummy_log
+    :keyword ??: any, will be passed to modules
 
     :returns: None
 
@@ -145,56 +152,33 @@ def eval_core(path_ev, path_rd, path_gt, key, temp_dir='/tmp', log=dummy_log):
     """
 
     # inits
+    logger = Logger.get_logger(log)
     rval = EvaluationResults(id=Key)
 
     # read in evaluation file
-    log(1, '*-reading files')
+    logger.log(1, '*-reading files')
+    rd = read_hdf5(path_rd)
     ev = read_gdf(path_ev)
-    log(1, 'evaluation file read!')
-    bm = read_hdf5(path_rd)
-    log(1, 'gtfile: %s' % gt_file)
-    log(" benchmark: ")
-    log(benchmark)
-    bm_filename = osp.join(base_dir, benchmark)
-    log('groundtruth file found: %s' % bm_filename)
-    groundtruth = read_file(bm_filename)
-    log('groundtruth file read!')
+    gt = read_gdf(path_gt)
+    logger.log('done reading files!')
 
-    # calculate alignment
-    log('*-evaluation of data')
-    results = align_spike_trains(
-        groundtruth,
-        train,
-        max_shift=35
-    )
+    # apply modules
+    logger.log('*-evaluation of data')
+    modules = []
+    for mod in MODULES:
+        try:
+            logger.log('starting module: %s' % mod.__name__)
+            this_mod = mod(rd, gt, ev, logger, **kwargs)
+            this_mod.apply()
+        except Exception, ex:
+            logger.log(str(ex))
+        finally:
+            modules.append(this_mod)
+    logger.log('evaluation done!')
 
-    log('evaluation done!')
-
-    # generate charts
-    log('*-generating plots')
-
-    do_plotting(
-        result_dir,
-        bm_filename,
-        train,
-        results['delta_shift'],
-        ev_file.split('.')[0]
-    )
-    log('plots done!')
-
-    rval = {'results':results, 'train':train, 'benchmark':benchmark}
-    return rval
-
-
-def dummy_log(level, text):
-    """prototype for the logging handle
-
-    :param level: logging level
-    :param text: text to log
-    :return: None
-    """
-
-    print text
+    # TODO: do something meaningful with the finalised modules (results)
+    # XXX: unclear how to precede :(
+    return modules
 
 ##---MAIN
 

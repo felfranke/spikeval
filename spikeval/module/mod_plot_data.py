@@ -21,6 +21,8 @@ from .base_module import BaseModule, ModuleInputError, ModuleExecutionError
 from .result_types import MRPlot
 from ..util import extract_spikes
 
+spikeplot.mpl.interactive(False)
+
 
 ##---CLASSES
 
@@ -61,13 +63,12 @@ class ModDataPlot(BaseModule):
             'name':parameters.get('name', 'noname'),
             'noise_cov':parameters.get('noise_cov', None)}
 
-    def apply(self):
+    def _apply(self):
+        self._stage = 2
         cut = self.parameters['cut']
         spikes = {}
-        for k, v in sorted(self.sts_ev.keys()):
-            train = self.sts_ev[k][
-                    (self.sts_ev[k] > cut[0]) *
-                    (self.sts_ev[k] < self.raw_data.shape[0] - cut[1])]
+        for k, v in sorted(self.sts_ev.items()):
+            train = v[(v > cut[0]) * (v < self.raw_data.shape[0] - cut[1])]
             if len(train) == 0:
                 continue
             epochs = sp.vstack((
@@ -79,6 +80,41 @@ class ModDataPlot(BaseModule):
         self.plot_waveforms(spikes)
         self.plot_clusters(spikes)
         self.plot_spike_trains()
+
+    def plot_waveforms(self, spikes):
+        """:spikeplot.waveforms: plots
+
+        There will be one plot with waveforms per unit and one plot with all
+        waveforms stacked.
+
+        :type spikes: dict
+        :param spikes: one set of waveforms per unit {k:[n,samples]}
+        """
+
+        # produce plots for all units ...
+        self.result.append(spikeplot.waveforms(
+            spikes,
+            #            samples_per_second=self.parameters['sampling_rate'],
+            tf=sum(self.parameters['cut']),
+            plot_mean=True,
+            plot_single_waveforms=True,
+            plot_separate=True,
+            title='waveforms by units',
+            show=False,
+            filename=None))
+
+        # produce plots for all spikes ...
+        self.result.append(spikeplot.waveforms(
+            sp.vstack(spikes.values()),
+            #            samples_per_second=self.parameters['sampling_rate'],
+            tf=sum(self.parameters['cut']),
+            plot_mean=False,
+            plot_single_waveforms=True,
+            plot_separate=False,
+            title='waveforms all spikes',
+            colours=['gray'],
+            show=False,
+            filename=None))
 
     def plot_clusters(self, spikes, noise_cov=None):
         """:spikeplot.cluster: and :spikeplot.cluster_projection: plots
@@ -104,7 +140,7 @@ class ModDataPlot(BaseModule):
         nc = self.raw_data
         pca = PCANode(output_dim=4)
         # TODO: prewhiten
-        data_stacked = pca(sp.vstacke(spikes.values()))
+        data_stacked = pca(sp.vstack(spikes.values()))
         data = {}
         idx = 0
         for k, v in spikes.items():
@@ -114,7 +150,7 @@ class ModDataPlot(BaseModule):
 
         # produce scatter plots
         for pcs in [(0, 1), (2, 3)]:
-            self.result.append(spikeplot.clusters(
+            self.result.append(spikeplot.cluster(
                 data,
                 data_dim=pcs,
                 plot_mean=True,
@@ -122,48 +158,13 @@ class ModDataPlot(BaseModule):
                 xlabel='PC%s' % (pcs[0] + 1),
                 ylabel='PC%s' % (pcs[1] + 1),
                 show=False,
-                filename=False))
+                filename=None))
 
         # CLUSTER CENTER PROJECTIONS
         self.result.append(spikeplot.cluster_projection(
             data,
             show=False,
-            filename=False))
-
-    def plot_waveforms(self, spikes):
-        """:spikeplot.waveforms: plots
-
-        There will be one plot with waveforms per unit and one plot with all
-        waveforms stacked.
-
-        :type spikes: dict
-        :param spikes: one set of waveforms per unit {k:[n,samples]}
-        """
-
-        # produce plots for all units ...
-        self.result.append(spikeplot.waveforms(
-            spikes[k],
-            samples_per_second=self.parameters['sampling_rate'],
-            tf=sum(self.parameters['cut']),
-            plot_mean=True,
-            plot_single_waveforms=True,
-            plot_separate=True,
-            title='waveforms by units',
-            show=False,
-            filename=False))
-
-        # produce plots for all spikes ...
-        self.result.append(spikeplot.waveforms(
-            sp.vstack(spikes.values()),
-            samples_per_second=self.parameters['sampling_rate'],
-            tf=sum(self.parameters['cut']),
-            plot_mean=False,
-            plot_single_waveforms=True,
-            plot_separate=False,
-            title='waveforms all spikes',
-            colors=['gray'],
-            show=False,
-            filename=False))
+            filename=None))
 
     def plot_spike_trains(self):
         """:spikeplot.spike_train: plot
@@ -176,7 +177,7 @@ class ModDataPlot(BaseModule):
             samples_per_second=self.parameters['sampling_rate'],
             marker_width=1,
             show=False,
-            filename=False))
+            filename=None))
 
 ##--- MAIN
 

@@ -68,11 +68,12 @@ class BaseModule(object):
         """
 
         # inits and checks
+        self._stage = 0
         self.logger = Logger.get_logger(log)
+        self.parameters = self.check_parameters(parameters)
         self.check_raw_data(raw_data)
         self.check_sts_gt(sts_gt)
         self.check_sts_ev(sts_ev)
-        self.parameters = self.check_parameters(parameters)
         self.raw_data = raw_data
         self.sts_gt = sts_gt
         self.sts_ev = sts_ev
@@ -84,6 +85,14 @@ class BaseModule(object):
             raise ModuleExecutionError('not all result types are not derived '
                                        'from :ModuleResult\n%s' %
                                        self.RESULT_TYPES)
+        self._stage = 1
+
+    @property
+    def status(self):
+        return {0:'__init__',
+                1:'initialised',
+                2:'processing',
+                3:'finalised'}[self._stage]
 
     def check_raw_data(self, raw_data):
         """check if :raw_data: is valid raw data
@@ -138,9 +147,22 @@ class BaseModule(object):
         raise NotImplementedError
 
     def apply(self):
-        pass
+        self._stage = 2
+        self._apply()
+        if len(self.RESULT_TYPES) != len(self.result):
+            raise ModuleExecutionError('non-matching result count %d:%d' %
+                                       (len(self.RESULT_TYPES),
+                                        len(self.result)))
+        for i in xrange(len(self.result)):
+            if not isinstance(self.result[i], self.RESULT_TYPES[i]):
+                try:
+                    self.result[i] = self.RESULT_TYPES[i](self.result[i])
+                except Exception, ex:
+                    raise ModuleExecutionError(
+                        'Error during result conversion\n%s' % str(ex))
+        self._stage = 3
 
-    ##---MAIN
+##---MAIN
 
-    if __name__ == '__main__':
-        pass
+if __name__ == '__main__':
+    pass

@@ -11,14 +11,24 @@ __author__ = 'Philipp Meier <pmeier82 at googlemail dot com>'
 __docformat__ = 'restructuredtext'
 
 from setuptools import setup, find_packages
-import spikeval
+
+def find_version():
+    """read version from __init__"""
+    rval = '-1'
+    with open('./spikeval/__init__.py', 'r') as f:
+        for line in f:
+            if line.startswith('__version__'):
+                rval = line.split()[-1][1:-1]
+                break
+    return rval
 
 DESC_TITLE = "SpikeEval : systematic evaluation of spike sorting"
 DESC_LONG = ''.join([DESC_TITLE, '\n\n', open('README', 'r').read()])
+VERSION = find_version()
 
 if __name__ == "__main__":
     setup(name="spikeval",
-          version=spikeval.__version__,
+          version=VERSION,
           packages=find_packages(),
           include_package_data=True,
           install_requires=[
