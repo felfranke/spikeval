@@ -6,7 +6,7 @@
 # 2011-09-30
 #
 
-"""install script for the SpikeEval package"""
+"""install script for the SpikEval package"""
 __author__ = 'Philipp Meier <pmeier82 at googlemail dot com>'
 __docformat__ = 'restructuredtext'
 
@@ -22,7 +22,7 @@ def find_version():
                 break
     return rval
 
-DESC_TITLE = "SpikeEval : systematic evaluation of spike sorting"
+DESC_TITLE = "SpikEval : systematic evaluation of spike sorting"
 DESC_LONG = ''.join([DESC_TITLE, '\n\n', open('README', 'r').read()])
 VERSION = find_version()
 
