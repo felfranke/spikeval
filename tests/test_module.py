@@ -13,9 +13,10 @@ __docformat__ = 'restructuredtext'
 ##---IMPORTS
 
 try:
-    import unittest
-except ImportError:
+    # for python <= 2.7.x
     import unittest2 as unittest
+except ImportError:
+    import unittest
 
 import sys
 import scipy as sp
