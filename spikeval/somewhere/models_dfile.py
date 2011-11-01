@@ -13,19 +13,22 @@ def make_upload_path(self, filename):
     """
     return "data/%s/%s" % (self.owner.username, filename)
 
+
 class FileSystemStorage(storage.FileSystemStorage):
     """
     Subclass Django's standard FileSystemStorage to fix permissions
     of uploaded files.
     """
+
     def _save(self, name, content):
-        name =  super(FileSystemStorage, self)._save(name, content)
+        name = super(FileSystemStorage, self)._save(name, content)
         full_path = self.path(name)
         mode = getattr(settings, 'FILE_UPLOAD_PERMISSIONS', None)
         if not mode:
             mode = 0644
         os.chmod(full_path, mode)
         return name
+
 
 class Datafile(models.Model):
     """
@@ -35,10 +38,12 @@ class Datafile(models.Model):
         ('R', 'Raw Benchmark Data File'),
         ('G', 'Groundtruth Benchmark File'),
         ('U', 'User Uploaded File'),
-    )
+        )
     filetype = models.CharField(max_length=1, choices=FILETYPE_CHOICES)
     record = models.ForeignKey(Record, blank=True)
-    date_created = models.DateTimeField(_('date created'), default=datetime.now, editable=False)
+    date_created = models.DateTimeField(_('date created'),
+                                        default=datetime.now
+                                        , editable=False)
     added_by = models.ForeignKey(User, blank=True, editable=False)
 
     def __unicode__(self):
@@ -46,6 +51,7 @@ class Datafile(models.Model):
 
     def get_absolute_url(self):
         return ("download", [self.pk])
+
     get_absolute_url = models.permalink(get_absolute_url)
 
     def get_version(self, version=None):
@@ -107,8 +113,13 @@ class Version(models.Model):
     title = models.CharField(_('title'), max_length=200)
     version = models.IntegerField()
     datafile = models.ForeignKey(Datafile)
-    raw_file = models.FileField(_('data file'), upload_to="files/benchmarks/") # or make_upload_path.. which doesn't work for Python 2.5
-    date_created = models.DateTimeField(_('date created'), default=datetime.now, editable=False)
+    raw_file = models.FileField(_('data file'),
+                                upload_to="files/benchmarks/") # or
+                                # make_upload_path.. which doesn't work for
+                                # Python 2.5
+    date_created = models.DateTimeField(_('date created'),
+                                        default=datetime.now
+                                        , editable=False)
     added_by = models.ForeignKey(User, blank=True, editable=False)
 
     def evaluations(self):
@@ -119,6 +130,7 @@ class Version(models.Model):
 
     def get_absolute_url(self):
         return ("download", [self.pk, self.version])
+
     get_absolute_url = models.permalink(get_absolute_url)
 
     @property

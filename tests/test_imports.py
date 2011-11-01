@@ -29,21 +29,21 @@ class TestImports(unittest.TestCase):
 
         import scipy
 
-        self.assertGreaterEqual(scipy.__version__, '0.7.0')
+        self.assertGreaterEqual(scipy.__version__, '0.7')
 
     def test_tables(self):
         """test for tables"""
 
         import tables
 
-        self.assertGreaterEqual(tables.__version__, '2.1.2')
+        self.assertGreaterEqual(tables.__version__, '2.0')
 
     def test_matplotlib(self):
         """test for matplotlib"""
 
         import matplotlib
 
-        self.assertGreaterEqual(matplotlib.__version__, '0.99.3')
+        self.assertGreaterEqual(matplotlib.__version__, '0.98')
         self.assertEqual(matplotlib.validate_backend('agg'), 'agg')
 
     def test_texttable(self):
@@ -58,7 +58,7 @@ class TestImports(unittest.TestCase):
 
         import Image
 
-        self.assertGreaterEqual(Image.VERSION, '1.1.7')
+        self.assertGreaterEqual(Image.VERSION, '1.1.6')
 
     def test_mdp(self):
         """test for modular toolkit for data processing"""

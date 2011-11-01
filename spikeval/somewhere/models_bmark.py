@@ -6,22 +6,29 @@ from tagging.fields import TagField
 
 class Benchmark(models.Model):
     """
-    Benchmark is a class representing a set of Benchmark data files, organized 
-    in Records. Each Record contains one Groundtruth File with corresponding raw
-    benchmark data files (may be several due to different formats). Typically, 
+    Benchmark is a class representing a set of Benchmark data files,
+    organized
+    in Records. Each Record contains one Groundtruth File with corresponding
+     raw
+    benchmark data files (may be several due to different formats).
+    Typically,
     a whole Benchmark belongs to one scientist.
     """
     BENCHMARK_STATES = (
         ('N', 'New/Non-active'),
         ('A', 'Active'),
         ('C', 'Closed'),
-    )
+        )
     name = models.CharField(_('name'), blank=True, max_length=200)
     description = models.TextField(blank=True, null=True)
-    owner = models.ForeignKey(User, related_name="benchmark owner", blank=True)
-    state = models.CharField(max_length=1, default="N", choices=BENCHMARK_STATES)
+    owner = models.ForeignKey(User, related_name="benchmark owner",
+                              blank=True)
+    state = models.CharField(max_length=1, default="N",
+                             choices=BENCHMARK_STATES)
     tags = TagField(_('keywords'))
-    date_created = models.DateTimeField(_('date created'), default=datetime.now, editable=False)
+    date_created = models.DateTimeField(_('date created'),
+                                        default=datetime.now
+                                        , editable=False)
     added_by = models.ForeignKey(User, blank=True, editable=False)
 
     def __unicode__(self):
@@ -29,6 +36,7 @@ class Benchmark(models.Model):
 
     def get_absolute_url(self):
         return ("b_details", [self.pk])
+
     get_absolute_url = models.permalink(get_absolute_url)
 
     def is_active(self):
@@ -58,17 +66,20 @@ class Benchmark(models.Model):
     def eval_count(self):
         return len(self.evaluations())
 
+
 class Record(models.Model):
     """
-    A Record is a unique pair of groundtruth - raw data benchmark files, 
-    representing a unit, against which users can make evaluations of their 
+    A Record is a unique pair of groundtruth - raw data benchmark files,
+    representing a unit, against which users can make evaluations of their
     algorithms. Actually, there can be several raw data files in the record,
     however they should differ only with the format, not with their contents.
     """
     name = models.CharField(_('name'), blank=True, max_length=200)
     description = models.TextField(blank=True, null=True)
     benchmark = models.ForeignKey(Benchmark)
-    date_created = models.DateTimeField(_('date created'), default=datetime.now, editable=False)
+    date_created = models.DateTimeField(_('date created'),
+                                        default=datetime.now
+                                        , editable=False)
     added_by = models.ForeignKey(User, blank=True, editable=False)
 
     def get_active_rfile(self):

@@ -7,7 +7,8 @@ import numpy as np
 from scipy import signal
 from fields import models as fmodels
 from datafiles.models import Datafile
-from meta import meta_unit_types, meta_objects, meta_messages, meta_children, factor_options
+from meta import meta_unit_types, meta_objects, meta_messages, \
+    meta_children, factor_options
 
 # default unit values and values limits
 name_max_length = 100
@@ -19,7 +20,8 @@ def_data_unit = "mV"
 def_samp_unit = "Hz"
 
 # supporting functions
-#===============================================================================
+#===========================================================================
+# ====
 
 def _find_nearest(array, value):
     """
@@ -27,6 +29,7 @@ def _find_nearest(array, value):
     """
     idx = (np.abs(array - float(value))).argmin()
     return idx
+
 
 def _data_as_list(data):
     """
@@ -37,6 +40,7 @@ def _data_as_list(data):
         for s in str(data).split(','):
             l.append(float(s))
     return l
+
 
 def _clean_csv(arr):
     """
@@ -68,13 +72,15 @@ class BaseInfo(models.Model):
         (10, 'Active'),
         (20, 'Deleted'),
         (30, 'Archived'),
-    )
-    _current_state = models.IntegerField('current state', choices=STATES, default=10)
+        )
+    _current_state = models.IntegerField('current state', choices=STATES,
+                                         default=10)
     author = models.ForeignKey(User)
     date_created = models.DateTimeField('date created', default=datetime.now,\
-        editable=False)
+                                        editable=False)
     file_origin = models.ForeignKey(Datafile, blank=True, null=True)
-    last_modified = models.DateTimeField(auto_now=True) # Resp. H: Last-modified
+    last_modified = models.DateTimeField(
+        auto_now=True) # Resp. H: Last-modified
 
     # this is temporary unless the integration with Datafiles is implemented
     def is_accessible(self, user):
@@ -96,7 +102,9 @@ class BaseInfo(models.Model):
         for obj_type in meta_objects:
             if isinstance(self, meta_classnames[obj_type]):
                 return obj_type
-        raise TypeError("Critical error. Panic. NEO object can't define it's own type. Tell system developers.")
+        raise TypeError(
+            "Critical error. Panic. NEO object can't define it's own type.
+        Tell system developers.")
 
     @property
     def neo_id(self):
@@ -132,9 +140,9 @@ class BaseInfo(models.Model):
     def restore(self):
         self._current_state = 10
 
-
 # basic NEO classes
-#===============================================================================
+#===========================================================================
+# ====
 
 # 1 (of 15)
 class Block(BaseInfo):
@@ -154,7 +162,6 @@ class Block(BaseInfo):
     def size(self):
         return int(np.array([w.size for w in self.segment_set.all()]).sum())
 
-
 # 2 (of 15)
 class Segment(BaseInfo):
     """
@@ -169,9 +176,10 @@ class Segment(BaseInfo):
 
     @property
     def size(self):
-        return int(np.array([np.array([w.size for w in getattr(self, child + \
-            "_set").all()]).sum() for child in meta_children["segment"]]).sum())
-
+        return int(np.array([np.array([w.size for w in getattr(self, child +\
+                                                                     "_set")
+        .all()]).sum()
+                             for child in meta_children["segment"]]).sum())
 
 # 3 (of 15)
 class EventArray(BaseInfo):
@@ -222,7 +230,8 @@ class Epoch(BaseInfo):
     time = models.FloatField('time')
     time__unit = fmodels.TimeUnitField('time__unit', default=def_time_unit)
     duration = models.FloatField('duration')
-    duration__unit = fmodels.TimeUnitField('duration__unit', default=def_time_unit)
+    duration__unit = fmodels.TimeUnitField('duration__unit',
+                                           default=def_time_unit)
     # NEO relationships
     segment = models.ForeignKey(Segment, blank=True, null=True)
     epocharray = models.ForeignKey(EpochArray, blank=True, null=True)
@@ -245,7 +254,6 @@ class RecordingChannelGroup(BaseInfo):
     # NEO relationships
     block = models.ForeignKey(Block, blank=True, null=True)
 
-
 # 8 (of 15)
 class RecordingChannel(BaseInfo):
     """
@@ -255,8 +263,9 @@ class RecordingChannel(BaseInfo):
     name = models.CharField('name', max_length=name_max_length)
     index = models.IntegerField('index', null=True, blank=True)
     # NEO relationships
-    recordingchannelgroup = models.ForeignKey(RecordingChannelGroup, blank=True, null=True)
-
+    recordingchannelgroup = models.ForeignKey(RecordingChannelGroup,
+                                              blank=True
+                                              , null=True)
 
 # 9 (of 15)
 class Unit(BaseInfo):
@@ -266,8 +275,8 @@ class Unit(BaseInfo):
     # NEO attributes
     name = models.CharField('name', max_length=name_max_length)
     # NEO relationships
-    recordingchannel = models.ManyToManyField(RecordingChannel, blank=True, null=True)
-
+    recordingchannel = models.ManyToManyField(RecordingChannel, blank=True,
+                                              null=True)
 
 # 10 (of 15)
 class SpikeTrain(BaseInfo):
@@ -276,37 +285,47 @@ class SpikeTrain(BaseInfo):
     """
     # NEO attributes
     t_start = models.FloatField('t_start')
-    t_start__unit = fmodels.TimeUnitField('t_start__unit', default=def_time_unit)
+    t_start__unit = fmodels.TimeUnitField('t_start__unit',
+                                          default=def_time_unit)
     t_stop = models.FloatField('t_stop', blank=True, null=True)
-    t_stop__unit = fmodels.TimeUnitField('t_stop__unit', default=def_time_unit)
+    t_stop__unit = fmodels.TimeUnitField('t_stop__unit',
+                                         default=def_time_unit)
     # NEO relationships
     segment = models.ForeignKey(Segment, blank=True, null=True)
     unit = models.ForeignKey(Unit, blank=True, null=True)
     # NEO data arrays
-    times_data = models.TextField('spike_data', blank=True) # use 'spike_times' property to get data
-    times__unit = fmodels.TimeUnitField('spike_data__unit', default=def_data_unit)
-    times_size = models.IntegerField('times_size', blank=True) # in bytes, for better performance
+    times_data = models.TextField('spike_data',
+                                  blank=True) # use 'spike_times' property
+                                  # to get data
+    times__unit = fmodels.TimeUnitField('spike_data__unit',
+                                        default=def_data_unit)
+    times_size = models.IntegerField('times_size',
+                                     blank=True) # in bytes,
+                                     # for better performance
 
     @apply
     def times():
         def fget(self):
             return _data_as_list(self.times_data)
+
         def fset(self, arr):
             self.times_data = _clean_csv(arr)
+
         def fdel(self):
             pass
+
         return property(**locals())
 
     @property
     def size(self):
-        return int(np.array([w.size for w in self.waveform_set.all()]).sum()) +\
-            self.times_size
+        return int(np.array([w.size for w in self.waveform_set.all()]).sum()
+        ) +\
+               self.times_size
 
     def save(self, *args, **kwargs):
         # override save to keep signal size up to date
         self.times_size = len(self.times) * 24
         super(SpikeTrain, self).save(*args, **kwargs)
-
 
 # 11 (of 15)
 class AnalogSignalArray(BaseInfo):
@@ -315,7 +334,9 @@ class AnalogSignalArray(BaseInfo):
     """
     # NEO relationships
     segment = models.ForeignKey(Segment, blank=True, null=True)
-    recordingchannelgroup = models.ForeignKey(RecordingChannelGroup, blank=True, null=True)
+    recordingchannelgroup = models.ForeignKey(RecordingChannelGroup,
+                                              blank=True
+                                              , null=True)
 
     # NEO attributes
     @property
@@ -328,8 +349,8 @@ class AnalogSignalArray(BaseInfo):
 
     @property
     def size(self):
-        return int(np.array([w.size for w in self.analogsignal_set.all()]).sum())
-
+        return int(
+            np.array([w.size for w in self.analogsignal_set.all()]).sum())
 
 # 12 (of 15)
 class AnalogSignal(BaseInfo):
@@ -339,20 +360,29 @@ class AnalogSignal(BaseInfo):
     # NEO attributes
     name = models.CharField('name', max_length=name_max_length)
     sampling_rate = models.FloatField('sampling_rate')
-    sampling_rate__unit = fmodels.SamplingUnitField('sampling_rate__unit', default=def_samp_unit)
+    sampling_rate__unit = fmodels.SamplingUnitField('sampling_rate__unit',
+                                                    default=def_samp_unit)
     t_start = models.FloatField('t_start')
-    t_start__unit = fmodels.TimeUnitField('t_start__unit', default=def_time_unit)
+    t_start__unit = fmodels.TimeUnitField('t_start__unit',
+                                          default=def_time_unit)
     # NEO relationships
     segment = models.ForeignKey(Segment, blank=True, null=True)
-    recordingchannel = models.ForeignKey(RecordingChannel, blank=True, null=True)
-    analogsignalarray = models.ForeignKey(AnalogSignalArray, blank=True, null=True)
+    recordingchannel = models.ForeignKey(RecordingChannel, blank=True,
+                                         null=True)
+    analogsignalarray = models.ForeignKey(AnalogSignalArray, blank=True,
+                                          null=True)
     # NEO data arrays
-    signal_data = models.TextField('signal_data') # use 'signal' property to get data
-    signal__unit = fmodels.SignalUnitField('signal__unit', default=def_data_unit)
-    signal_size = models.IntegerField('signal_size', blank=True) # in bytes, for better performance
+    signal_data = models.TextField(
+        'signal_data') # use 'signal' property to get data
+    signal__unit = fmodels.SignalUnitField('signal__unit',
+                                           default=def_data_unit)
+    signal_size = models.IntegerField('signal_size',
+                                      blank=True) # in bytes,
+                                      # for better performance
 
     def get_slice(self, start_time=None, end_time=None, start_index=None,\
-            end_index=None, duration=None, samples_count=None, downsample=None):
+                  end_index=None, duration=None, samples_count=None,
+                  downsample=None):
         """
         Implements dataslicing/downsampling. Floats/integers are expected.
         'downsample' parameter defines the new resampled resolution.
@@ -360,45 +390,59 @@ class AnalogSignal(BaseInfo):
         dataslice = self.signal
         t_start = self.t_start
         # calculate the factor to align time / sampling rate units
-        factor = factor_options.get("%s%s" % (self.t_start__unit.lower(), \
-            self.sampling_rate__unit.lower()), 1.0)
+        factor = factor_options.get("%s%s" % (self.t_start__unit.lower(),\
+                                              self.sampling_rate__unit.lower
+                                                  ())
+                                    , 1.0)
         s_index = start_index
         if not s_index: s_index = 0
         e_index = end_index or (len(dataslice) - 1)
         if start_time:
-            s_index = int(round(self.sampling_rate * (start_time - t_start) * factor))
+            s_index = int(
+                round(self.sampling_rate * (start_time - t_start) * factor))
         if end_time:
-            e_index = int(round(self.sampling_rate * (end_time - t_start) * factor))
+            e_index = int(
+                round(self.sampling_rate * (end_time - t_start) * factor))
         if duration:
             if start_time or start_index:
-                e_index = s_index + int(round(self.sampling_rate * duration * factor))
+                e_index = s_index + int(
+                    round(self.sampling_rate * duration * factor))
             else:
-                s_index = e_index - int(round(self.sampling_rate * duration * factor))
+                s_index = e_index - int(
+                    round(self.sampling_rate * duration * factor))
         if samples_count:
             if start_time or start_index:
                 e_index = s_index + samples_count
             else:
                 s_index = e_index - samples_count
         if s_index >= 0 and s_index < e_index and e_index < len(dataslice):
-            dataslice = dataslice[s_index:e_index+1]
-            t_start = (s_index * 1.0 / self.sampling_rate * 1.0 / factor) # compute new t_start
+            dataslice = dataslice[s_index:e_index + 1]
+            t_start = (
+            s_index * 1.0 / self.sampling_rate * 1.0 / factor) # compute new
+            # t_start
         else:
-            raise IndexError("Index is out of range. From the values provided \
-we can't get the slice of the signal. We calculated the start index as %d and \
-end index as %d. The whole signal has %d datapoints." % (s_index, e_index, \
-len(dataslice)))
+            raise IndexError("Index is out of range. From the values
+        provided \
+we can't get the slice of the signal. We calculated the start index as %d
+        and \
+end index as %d. The whole signal has %d datapoints." % (s_index, e_index,\
+                                                         len(dataslice)))
         if downsample and downsample < len(dataslice):
-            dataslice = signal.resample(np.array(dataslice), downsample).tolist()
+            dataslice = signal.resample(np.array(dataslice),
+                                        downsample).tolist()
         return dataslice, t_start
 
     @apply
     def signal():
         def fget(self):
             return _data_as_list(self.signal_data)
+
         def fset(self, arr):
             self.signal_data = _clean_csv(arr)
+
         def fdel(self):
             pass
+
         return property(**locals())
 
     @property
@@ -418,7 +462,6 @@ len(dataslice)))
         self.signal_size = len(self.signal) * 24
         super(AnalogSignal, self).save(*args, **kwargs)
 
-
 # 13 (of 15)
 class IrSaAnalogSignal(BaseInfo):
     """
@@ -427,19 +470,28 @@ class IrSaAnalogSignal(BaseInfo):
     # NEO attributes
     name = models.CharField('name', max_length=name_max_length)
     t_start = models.FloatField('t_start')
-    t_start__unit = fmodels.TimeUnitField('t_start__unit', default=def_time_unit)
+    t_start__unit = fmodels.TimeUnitField('t_start__unit',
+                                          default=def_time_unit)
     # NEO relationships
     segment = models.ForeignKey(Segment, blank=True, null=True)
-    recordingchannel = models.ForeignKey(RecordingChannel, blank=True, null=True)
+    recordingchannel = models.ForeignKey(RecordingChannel, blank=True,
+                                         null=True)
     # NEO data arrays
-    signal_data = models.TextField('signal_data') # use 'signal' property to get data
-    signal__unit = fmodels.SignalUnitField('signal__unit', default=def_data_unit)
-    times_data = models.TextField('times_data', blank=True) # use 'times' property to get data
+    signal_data = models.TextField(
+        'signal_data') # use 'signal' property to get data
+    signal__unit = fmodels.SignalUnitField('signal__unit',
+                                           default=def_data_unit)
+    times_data = models.TextField('times_data',
+                                  blank=True) # use 'times' property to get
+                                  # data
     times__unit = fmodels.TimeUnitField('times__unit', default=def_time_unit)
-    object_size = models.IntegerField('object_size', blank=True) # in bytes, for better performance
+    object_size = models.IntegerField('object_size',
+                                      blank=True) # in bytes,
+                                      # for better performance
 
     def get_slice(self, start_time=None, end_time=None, start_index=None,\
-            end_index=None, duration=None, samples_count=None, downsample=None):
+                  end_index=None, duration=None, samples_count=None,
+                  downsample=None):
         """
         Implements dataslicing/downsampling. Floats/integers are expected.
         'downsample' parameter defines the new resampled resolution.
@@ -459,51 +511,63 @@ class IrSaAnalogSignal(BaseInfo):
             e_index = _find_nearest(np.array(times), end_time)
         if duration:
             if start_time:
-                e_index = _find_nearest(np.array(times), start_time + duration)
+                e_index = _find_nearest(np.array(times),
+                                        start_time + duration)
             if start_index:
-                e_index = _find_nearest(np.array(times), times[start_index] + duration)
+                e_index = _find_nearest(np.array(times),
+                                        times[start_index] + duration)
             if end_time:
-                e_index = _find_nearest(np.array(times), start_time - duration)
+                e_index = _find_nearest(np.array(times),
+                                        start_time - duration)
             if end_index:
-                e_index = _find_nearest(np.array(times), times[end_index] - duration)
+                e_index = _find_nearest(np.array(times),
+                                        times[end_index] - duration)
         if samples_count:
             if start_time or start_index:
                 e_index = s_index + samples_count
             else:
                 s_index = e_index - samples_count
         if s_index >= 0 and s_index < e_index and e_index < len(dataslice):
-            dataslice = dataslice[s_index:e_index+1]
-            times = times[s_index:e_index+1]
+            dataslice = dataslice[s_index:e_index + 1]
+            times = times[s_index:e_index + 1]
             t_start = times[0] # compute new t_start
         else:
-            raise IndexError("Index is out of range. From the values provided \
-we can't get the slice of the signal. We calculated the start index as %d and \
-end index as %d. The whole signal has %d datapoints." % (s_index, e_index, \
-len(dataslice)))
+            raise IndexError("Index is out of range. From the values
+        provided \
+we can't get the slice of the signal. We calculated the start index as %d
+        and \
+end index as %d. The whole signal has %d datapoints." % (s_index, e_index,\
+                                                         len(dataslice)))
         if downsample and downsample < len(dataslice):
-            dataslice = signal.resample(np.array(dataslice), downsample).tolist()
+            dataslice = signal.resample(np.array(dataslice),
+                                        downsample).tolist()
             times = signal.resample(np.array(times), downsample).tolist()
         return dataslice, times, t_start
-
 
     @apply
     def signal():
         def fget(self):
             return _data_as_list(self.signal_data)
+
         def fset(self, arr):
             self.signal_data = _clean_csv(arr)
+
         def fdel(self):
             pass
+
         return property(**locals())
 
     @apply
     def times():
         def fget(self):
             return _data_as_list(self.times_data)
+
         def fset(self, arr):
             self.times_data = _clean_csv(arr)
+
         def fdel(self):
             pass
+
         return property(**locals())
 
     @property
@@ -512,16 +576,18 @@ len(dataslice)))
 
     def save(self, *args, **kwargs):
         # override save to keep signal size up to date
-        self.object_size = (len(self.signal) * 24) + \
-            (len(self.times) * 24)
+        self.object_size = (len(self.signal) * 24) +\
+                           (len(self.times) * 24)
         super(IrSaAnalogSignal, self).save(*args, **kwargs)
 
     def full_clean(self, *args, **kwargs):
         """
-        Add some validation to keep 'signal' and 'times' dimensions consistent.
+        Add some validation to keep 'signal' and 'times' dimensions
+        consistent.
         """
         if not len(self.signal) == len(self.times):
-            raise ValidationError({"Data Inconsistent": meta_messages["data_inconsistency"]})
+            raise ValidationError(
+                    {"Data Inconsistent":meta_messages["data_inconsistency"]})
         super(IrSaAnalogSignal, self).full_clean(*args, **kwargs)
 
 # 14 (of 15)
@@ -533,9 +599,11 @@ class Spike(BaseInfo):
     time = models.FloatField('t_start')
     time__unit = fmodels.TimeUnitField('time__unit', default=def_time_unit)
     sampling_rate = models.FloatField('sampling_rate')
-    sampling_rate__unit = fmodels.SamplingUnitField('sampling_rate__unit', default=def_samp_unit)
+    sampling_rate__unit = fmodels.SamplingUnitField('sampling_rate__unit',
+                                                    default=def_samp_unit)
     left_sweep = models.FloatField('left_sweep', default=0.0)
-    left_sweep__unit = fmodels.TimeUnitField('left_sweep__unit', default=def_time_unit)
+    left_sweep__unit = fmodels.TimeUnitField('left_sweep__unit',
+                                             default=def_time_unit)
     # NEO relationships
     segment = models.ForeignKey(Segment, blank=True, null=True)
     unit = models.ForeignKey(Unit, blank=True, null=True)
@@ -550,11 +618,15 @@ class WaveForm(BaseInfo):
     Supporting class for Spikes and SpikeTrains.
     """
     channel_index = models.IntegerField('channel_index', null=True, blank=True)
-    time_of_spike_data = models.FloatField('time_of_spike_data', default=0.0) # default used when WF is related to a Spike
-    time_of_spike__unit = fmodels.TimeUnitField('time_of_spike__unit', default=def_data_unit)
+    time_of_spike_data = models.FloatField('time_of_spike_data',
+                                           default=0.0) # default used when WF is related to a Spike
+    time_of_spike__unit = fmodels.TimeUnitField('time_of_spike__unit',
+                                                default=def_data_unit)
     waveform_data = models.TextField('waveform_data')
-    waveform__unit = fmodels.SignalUnitField('waveform__unit', default=def_data_unit)
-    waveform_size = models.IntegerField('waveform_size', blank=True, null=True) # in bytes, for better performance
+    waveform__unit = fmodels.SignalUnitField('waveform__unit',
+                                             default=def_data_unit)
+    waveform_size = models.IntegerField('waveform_size', blank=True,
+                                        null=True) # in bytes, for better performance
     spiketrain = models.ForeignKey(SpikeTrain, blank=True, null=True)
     spike = models.ForeignKey(Spike, blank=True, null=True)
 
@@ -562,10 +634,13 @@ class WaveForm(BaseInfo):
     def waveform():
         def fget(self):
             return _data_as_list(self.waveform_data)
+
         def fset(self, arr):
             self.waveform_data = _clean_csv(arr)
+
         def fdel(self):
             pass
+
         return property(**locals())
 
     @property
@@ -581,18 +656,18 @@ class WaveForm(BaseInfo):
 #===============================================================================
 
 meta_classnames = {
-    "block": Block,
-    "segment": Segment,
-    "event": Event,
-    "eventarray": EventArray,
-    "epoch": Epoch,
-    "epocharray": EpochArray,
-    "unit": Unit,
-    "spiketrain": SpikeTrain,
-    "analogsignal": AnalogSignal,
-    "analogsignalarray": AnalogSignalArray,
-    "irsaanalogsignal": IrSaAnalogSignal,
-    "spike": Spike,
-    "recordingchannelgroup": RecordingChannelGroup,
-    "recordingchannel": RecordingChannel}
+    "block":Block,
+    "segment":Segment,
+    "event":Event,
+    "eventarray":EventArray,
+    "epoch":Epoch,
+    "epocharray":EpochArray,
+    "unit":Unit,
+    "spiketrain":SpikeTrain,
+    "analogsignal":AnalogSignal,
+    "analogsignalarray":AnalogSignalArray,
+    "irsaanalogsignal":IrSaAnalogSignal,
+    "spike":Spike,
+    "recordingchannelgroup":RecordingChannelGroup,
+    "recordingchannel":RecordingChannel}
 

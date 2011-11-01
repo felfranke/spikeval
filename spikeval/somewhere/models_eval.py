@@ -5,32 +5,34 @@ from django.utils.translation import ugettext_lazy as _
 from dfiles.models import Version
 import math
 
-
 class Evaluation(models.Model):
     """
-    When user wants to evaluate the results of his spike sorting work, he 
-    creates an evaluation. Physically, an evaluation binds together 
-    user-uploaded file with sorted data, an original version of the raw data 
+    When user wants to evaluate the results of his spike sorting work, he
+    creates an evaluation. Physically, an evaluation binds together
+    user-uploaded file with sorted data, an original version of the raw data
     file and the evaluation results.
     """
     PROCESSING_STATES = (
         (0, 'In Progress'),
         (1, 'Success'),
         (2, 'Failure'),
-    )
+        )
     PUBLICATION_STATES = (
         (0, 'Private'),
         (1, 'Public'),
-    )
+        )
     algorithm = models.CharField(max_length=100, null=True)
     description = models.TextField(blank=True, null=True)
-    owner = models.ForeignKey(User, related_name="evaluation owner", blank=True)
+    owner = models.ForeignKey(User, related_name="evaluation owner",
+                              blank=True)
     processing_state = models.IntegerField(choices=PROCESSING_STATES)
     publication_state = models.IntegerField(choices=PUBLICATION_STATES)
     user_file = models.FileField(_('sorted data'), upload_to="files/user/")
     original_file = models.ForeignKey(Version)
     error = models.TextField(blank=True, null=True)
-    date_created = models.DateTimeField(_('date created'), default=datetime.now, editable=False)
+    date_created = models.DateTimeField(_('date created'),
+                                        default=datetime.now
+                                        , editable=False)
     added_by = models.ForeignKey(User, blank=True, editable=False)
 
     def __unicode__(self):
@@ -38,6 +40,7 @@ class Evaluation(models.Model):
 
     def get_absolute_url(self):
         return ("e_details", [self.pk])
+
     get_absolute_url = models.permalink(get_absolute_url)
 
     def switch(self):
@@ -109,7 +112,9 @@ class EvaluationResults(models.Model):
     KS = models.IntegerField()
     KSO = models.IntegerField()
     FS = models.IntegerField()
-    date_created = models.DateTimeField(_('date created'), default=datetime.now, editable=False)
+    date_created = models.DateTimeField(_('date created'),
+                                        default=datetime.now
+                                        , editable=False)
 
     def display(self):
         """

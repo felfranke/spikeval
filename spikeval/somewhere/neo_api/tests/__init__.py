@@ -1,13 +1,15 @@
 """
 Tests Roadmap
-================================================================================
+============================================================================
+====
 - unauthorized tests
-- generic tests: 
+- generic tests:
     - create
     - get full, info, data, parents, children
     - update + get
     - select
-- bad requests tests: assert correct bad data handling for all types of requests
+- bad requests tests: assert correct bad data handling for all types of
+requests
 - security tests: try to access objects created by another person
 
 Still remaining:
@@ -24,6 +26,7 @@ from neo_api.models import *
 from neo_api.tests.samples import sample_objects
 from neo_api.json_builder import clean_attr
 from neo_api.meta import meta_attributes
+
 try:
     import json
 except ImportError:
@@ -37,9 +40,9 @@ class TestUnauthorized(TestCase):
         """ test: create a block """
         """ expected: 401 Unathorized """
         response = self.client.post("/neo/block/", {
-            "name": "Block of recordings from May, 10",
-            "filedatetime": "2011-10-05",
-            "index": 1
+            "name":"Block of recordings from May, 10",
+            "filedatetime":"2011-10-05",
+            "index":1
         })
         self.assertEqual(response.status_code, 401)
 
@@ -47,7 +50,7 @@ class TestUnauthorized(TestCase):
         """ test: update a block """
         """ expected: 401 Unathorized """
         response = self.client.post("/neo/block/1/", {
-            "index": 5
+            "index":5
         })
         self.assertEqual(response.status_code, 401)
 
@@ -72,11 +75,14 @@ class TestGeneric(TestCase):
         """
         for obj_type, obj in sample_objects.items():
             for i in range(5): # create a few objects
-                response = self.client.post("/neo/%s/" % obj_type, \
-                    json.dumps(obj), content_type="application/json")
-                self.assertEqual(response.status_code, 201, \
-                    "Obj type %s; response: %s" % (obj_type, response.content))
-                    # "{0}, {1}".format(response.content, obj["obj_type"])) no python 2.6 (((
+                response = self.client.post("/neo/%s/" % obj_type,\
+                                            json.dumps(obj),
+                                            content_type="application/json")
+                self.assertEqual(response.status_code, 201,\
+                                 "Obj type %s; response: %s" % (
+                                 obj_type, response.content))
+                # "{0}, {1}".format(response.content,
+                # obj["obj_type"])) no python 2.6 (((
 
     def test_get_object(self):
         """
@@ -85,8 +91,9 @@ class TestGeneric(TestCase):
         """
         for key in sample_objects.keys():
             response = self.client.get("/neo/%s/1/" % key)
-            self.assertEqual(response.status_code, 200, \
-                "Obj type %s; response: %s" % (key, str(response)))
+            self.assertEqual(response.status_code, 200,\
+                             "Obj type %s; response: %s" % (
+                             key, str(response)))
             self.assertContains(response, key) # TODO add full check
 
     def test_update_objects(self):
@@ -103,7 +110,8 @@ class TestGeneric(TestCase):
             for _attr in meta_attributes[key]:
                 attr = clean_attr(_attr)
                 post = {}
-                post["neo_id"] = obj[key + "_1"] # should be created with 1 or 2
+                post["neo_id"] = obj[key + "_1"] # should be created with 1
+                or 2
                 post[attr] = obj[attr] # assign new attr
         """
         pass # TODO
@@ -115,17 +123,19 @@ class TestGeneric(TestCase):
         """
         for key in sample_objects.keys():
             response = self.client.get("/neo/%s/" % key)
-            self.assertEqual(response.status_code, 200, \
-                "Obj type %s; response: %s" % (key, str(response)))
+            self.assertEqual(response.status_code, 200,\
+                             "Obj type %s; response: %s" % (
+                             key, str(response)))
             r = json.loads(response.content)
             self.assertEqual(len(r["selected"]), 1) # from fixtures
             # TODO more convenient checks?
-            
+
 
 class TestSecurity(TestCase):
     """
     Here we test that a fake user 'joe' can't access objects, created (with
-    fixtures) by another fake user 'bob'. More tests here, when object sharing 
+    fixtures) by another fake user 'bob'. More tests here,
+    when object sharing
     is implemented.
     """
 
@@ -144,8 +154,8 @@ class TestSecurity(TestCase):
     def test_update_alien(self):
         for key, obj in sample_objects.items():
             # all alien object IDs are just <object_type>_1
-            response = self.client.post("/neo/%s/1/" % key, json.dumps(obj), \
-                content_type="application/json")
+            response = self.client.post("/neo/%s/1/" % key, json.dumps(obj),\
+                                        content_type="application/json")
             self.assertEqual(response.status_code, 401)
 
 
