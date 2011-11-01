@@ -8,7 +8,7 @@ Welcome to spikeval's documentation!
 
 This package is the evaluation backend for the Spike Sorting Evaluation website hosted
 
-.. automodule::spikeval
+.. automodule:: spikeval
 
 
 Contents

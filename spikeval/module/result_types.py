@@ -55,8 +55,22 @@ class ModuleResult(object):
         return self._value
 
 
+class MRString(ModuleResult):
+    """single string result"""
+
+    def __init__(self, value):
+        """
+        :type value: str
+        :param value: string value
+        """
+
+        if not isinstance(value, str):
+            raise ValueError('%s is not a string!' % value)
+        self._value = str(value)
+
+
 class MRScalar(ModuleResult):
-    """single _value (scalar) result"""
+    """single value (scalar) result"""
 
     def __init__(self, value):
         """
@@ -66,7 +80,7 @@ class MRScalar(ModuleResult):
 
         if not sp.isscalar(value):
             raise ValueError('%s is not a scalar!' % value)
-        self._value = value
+        self._value = sp.asscalar(value)
 
 
 class MRTable(ModuleResult):

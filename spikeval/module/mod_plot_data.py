@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# spikeval - mod_plot_data.py
+# spikeval - module.mod_plot_data.py
 #
 # Philipp Meier <pmeier82 at googlemail dot com>
 # 2011-10-20

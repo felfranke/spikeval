@@ -6,7 +6,7 @@
 # 2011-10-11
 #
 
-"""unit tests for packages and environment"""
+"""unit tests for modules"""
 __docformat__ = 'restructuredtext'
 
 

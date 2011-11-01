@@ -8,14 +8,14 @@
 
 """django specific functions and entry point"""
 __docformat__ = 'restructuredtext'
-__all__ = []
+__all__ = ['check_record', 'start_eval']
 
 
 ##---IMPORTS
 
 import sys
 from .core import eval_core
-from .datafiles import read_gdf, read_hdf5
+from .datafiles import read_gdf_sts, read_hdf5_arc
 from .somewhere import Record, EvaluationResults
 from .logging import Logger
 from .module import MODULES
@@ -75,7 +75,7 @@ def check_record(key, log=sys.stdout):
 
     try:
         # checking ground truth spike train file -- should be gdf
-        gt = read_gdf(gt_file_path)
+        gt = read_gdf_sts(gt_file_path)
         logger.log('found gt_file: %s' % gt_file_path)
         for st in gt:
             assert isinstance(st, sp.ndarray)
@@ -84,7 +84,7 @@ def check_record(key, log=sys.stdout):
         # TODO: more checks?
 
         # checking raw data file -- should be hdf5
-        rd = read_hdf5(rd_file_path)
+        rd = read_hdf5_arc(rd_file_path)
         logger.log('found rd_file: %s' % rd_file_path)
         assert 'sampling_rate' in rd
         srate = rd['sampling_rate']
@@ -126,8 +126,8 @@ def check_record(key, log=sys.stdout):
 #res.log = "bla"
 #res.image = Image
 #...
-def eval_core(path_rd, path_ev, path_gt, key, temp_dir='/tmp',
-              log=sys.stdout, **kwargs):
+def start_eval(path_rd, path_ev, path_gt, key, temp_dir='/tmp',
+               log=sys.stdout, **kwargs):
     """core function to produce one evaluation result based on one set of
     data, ground truth spike train and estimated spike train.
 
@@ -147,37 +147,37 @@ def eval_core(path_rd, path_ev, path_gt, key, temp_dir='/tmp',
     :keyword ??: any, will be passed to modules
 
     :returns: None
-
-    :raises: EvalError
     """
 
     # inits
     logger = Logger.get_logger(log)
-    rval = EvaluationResults(id=Key)
+    rval = EvaluationResults(id=key)
 
     # read in evaluation file
-    logger.log(1, '*-reading files')
-    rd = read_hdf5(path_rd)
-    ev = read_gdf(path_ev)
-    gt = read_gdf(path_gt)
-    logger.log('done reading files!')
+    logger.log('reading input files')
+    rd, sampling_rate = read_hdf5_arc(path_rd)
+    if sampling_rate is not None:
+        kwargs.update(sampling_rate=sampling_rate)
+    ev = read_gdf_sts(path_ev)
+    gt = read_gdf_sts(path_gt)
+    logger.log('done reading input files')
 
     # apply modules
-    logger.log('*-evaluation of data')
+    logger.log('starting evaluation loop:')
     modules = []
-    for mod in MODULES:
+    for mod_cls in MODULES:
         try:
-            logger.log('starting module: %s' % mod.__name__)
-            this_mod = mod(rd, gt, ev, logger, **kwargs)
-            this_mod.apply()
+            logger.log('starting module: %s' % mod_cls.__name__)
+            this_mod = eval_core(rd, gt, ev, mod_cls, logger, **kwargs)
         except Exception, ex:
+            logger.log_delimiter_line()
             logger.log(str(ex))
+            logger.log_delimiter_line()
         finally:
             modules.append(this_mod)
-    logger.log('evaluation done!')
+    logger.log('done evaluating')
 
-    # TODO: do something meaningful with the finalised modules (results)
-    # XXX: unclear how to precede :(
+    # dont care for result handling here
     return modules
 
 ##---MAIN

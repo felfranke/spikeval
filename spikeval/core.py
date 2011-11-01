@@ -13,18 +13,15 @@ __docformat__ = 'restructuredtext'
 
 ##---IMPORTS
 
-import sys
-import scipy as sp
 from .logging import Logger
-from .module.alignment_old import align_spike_trains as eval_metric
-from .module.mod_plot_data import do_plotting
 
 
 ##---FUNCTIONS
 
-def eval_core(raw_data, sts_gt, sts_ev, metric_cls, log=sys.stdout):
+def eval_core(raw_data, sts_gt, sts_ev, metric_cls, log=sys.stdout, **kwargs):
     """core function to produce one evaluation result based on one set of
-    data, ground truth spike train and estimated spike train.
+    data, ground truth spike train and estimated spike train. As this is a
+    core functionality it only log on error.
 
     :type raw_data: ndarray
     :param raw_data: raw data as ndarray with [samples, channels]
@@ -32,8 +29,8 @@ def eval_core(raw_data, sts_gt, sts_ev, metric_cls, log=sys.stdout):
     :param sts_gt: ground truth spike train set
     :type sts_ev: dict
     :param sts_ev: evaluation spike train set
-    :type module: EvalMetric
-    :param module: evaluation module to apply to the inputs
+    :type module_cls: EvalMetric
+    :param module_cls: evaluation module to apply to the inputs
     :type log: file-like
     :param log: stream to log to
         Default=sys.stdout
@@ -47,7 +44,7 @@ def eval_core(raw_data, sts_gt, sts_ev, metric_cls, log=sys.stdout):
 
     # start module
     try:
-        metric = metric_cls(raw_data, sts_gt, sts_ev, logger)
+        metric = metric_cls(raw_data, sts_gt, sts_ev, logger, **kwargs)
         metric.apply()
     except Exception, ex:
         logger.log_delimiter_line()
@@ -57,5 +54,6 @@ def eval_core(raw_data, sts_gt, sts_ev, metric_cls, log=sys.stdout):
         return metric
 
 ##--- MAIN
+
 if __name__ == '__main__':
     pass

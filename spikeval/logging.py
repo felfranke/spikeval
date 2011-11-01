@@ -8,11 +8,12 @@
 
 """logging class wrapping any object implementing the file interface"""
 __docformat__ = 'restructuredtext'
-__all__ = ['Logger', 'IFILE_METHODS']
+__all__ = ['Logger', 'IFILE_METHODS', 'STDLOG']
 
 
 ##---IMPORTS
 
+from sys import stdout
 from StringIO import StringIO
 
 
@@ -25,6 +26,8 @@ IFILE_METHODS = method_sets[0]
 for method_set in method_sets:
     IFILE_METHODS = IFILE_METHODS.intersection(method_set)
 del method_set, method_sets
+STDLOG = stdout
+
 
 
 ##---CLASSES
@@ -32,7 +35,7 @@ del method_set, method_sets
 class Logger(object):
     """logging wrapper"""
 
-    def __init__(self, file_like):
+    def __init__(self, file_like=STDLOG):
         """
         :type file_like: file-like
         :param file_like: object implementing the file interface
@@ -109,15 +112,4 @@ class Logger(object):
 ##--- MAIN
 
 if __name__ == '__main__':
-    s = StringIO()
-    l = Logger(s)
-    l.log_delimiter_line()
-    l.log('test')
-    l.log('test1', 'test2', 'test3')
-    l.log_delimiter_line()
-
-    print
-    print l
-    print s
-    print
-    print l.get_content()
+    pass
