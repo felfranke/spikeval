@@ -12,10 +12,13 @@ __docformat__ = 'restructuredtext'
 
 ##---IMPORTS
 
+try:
+    import unittest
+except ImportError:
+    import unittest2 as unittest
+
 import os
-import sys
-import unittest
-from spikeval.logging import Logger, STDLOG
+from spikeval.logging import Logger
 from StringIO import StringIO
 
 

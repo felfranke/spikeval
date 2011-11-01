@@ -12,8 +12,12 @@ __docformat__ = 'restructuredtext'
 
 ##---IMPORTS
 
+try:
+    import unittest
+except ImportError:
+    import unittest2 as unittest
+
 import sys
-import unittest
 import scipy as sp
 from spikeval.module.base_module import *
 from spikeval.module.result_types import *

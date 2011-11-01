@@ -12,7 +12,10 @@ __docformat__ = 'restructuredtext'
 
 ##---IMPORTS
 
-import unittest
+try:
+    import unittest
+except ImportError:
+    import unittest2 as unittest
 
 
 ##---TESTS
