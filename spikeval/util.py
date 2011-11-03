@@ -8,7 +8,8 @@
 
 """general utility/tools for dictionary and array handling"""
 __docformat__ = 'restructuredtext'
-__all__ = ['dict_list2arr', 'dict_arrsort']
+__all__ = ['dict_list2arr', 'dict_arrsort', 'extract_spikes', 'jitter_st',
+           'jitter_sts']
 
 
 ##---IMPORTS
@@ -16,15 +17,10 @@ __all__ = ['dict_list2arr', 'dict_arrsort']
 import scipy as sp
 
 
-##---EXCEPTIONS
-
-class UtilException(Exception):
-    pass
-
 ##---FUNCTIONS
 
 def dict_list2arr(in_dict):
-    """converts all lists in a dictionary to `ndarray`.
+    """converts all lists in a dictionary to `ndarray`. [in place!]
 
     If there are instances of dict found as values, this function will be
     applied recursively.
@@ -46,7 +42,7 @@ def dict_list2arr(in_dict):
 
 
 def dict_arrsort(in_dict):
-    """sort all arrays in a dictionary"""
+    """sort all arrays in a dictionary ["""
 
     try:
         for k in in_dict.keys():
@@ -84,6 +80,55 @@ def extract_spikes(data, epochs):
             rval[s, c * tf - correct_beg:(c + 1) * tf - correct_end] =\
             data[epochs[s, 0] - correct_beg:epochs[s, 1] - correct_end, c]
     return rval
+
+
+def jitter_st(st, jitter, start=None, end=None):
+    """jitters spike times in :st: by a uniform :jitter:
+
+    :type st: ndarray
+    :param st: spike train to jitter
+    :type jitter: int
+    :param jitter: std parameter for the uniform jitter distribution
+    :type start: int
+    :param start: if not None: minimum spike time to preserve after jitter
+        application.
+        Default=None
+    :type end: int
+    :param end: if not None: maximum spike time to preserve after jitter
+        application.
+        Default=None
+    :returns: ndararay : jittered spike train
+    """
+
+    rval = st.copy() + sp.random.uniform(-jitter, jitter, st.size)
+    if start is not None:
+        rval[rval < start] = start
+    if end is not None:
+        rval[rval > end] = end
+    return rval.astype(int)
+
+
+def jitter_sts(sts, jitter, start=None, end=None):
+    """jitters all spike trains in :sts: w.r.t. uniform distribution from
+    [-:jitter: : :jitter:]
+
+    :type sts: dict
+    :param sts: spike train set
+    :type jitter: int
+    :param jitter: jitter parameter for the uniform distribution
+    :param start: if not None: minimum spike time to preserve after jitter
+        application.
+        Default=None
+    :type end: int
+    :param end: if not None: maximum spike time to preserve after jitter
+        application.
+        Default=None
+    :return: dict : jittered spike train set
+    """
+
+    for k, v in sts.items():
+        sts[k] = jitter_st(sts[k], jitter, start=start, end=end)
+    return sts
 
 ##---MAIN
 

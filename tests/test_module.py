@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 ##---IMPORTS
 
 try:
-    # for python <= 2.7.x
+    # for python < 2.7.x
     import unittest2 as unittest
 except ImportError:
     import unittest
@@ -24,22 +24,6 @@ from spikeval.module.base_module import *
 from spikeval.module.result_types import *
 from spikeval.module.mod_plot_data import ModDataPlot
 
-
-##---CLASSES
-
-class MyTestModule(BaseModule):
-    """test module"""
-
-    RESULT_TYPES = [MRScalar, MRTable, MRDict, MRPlot]
-
-    def _check_raw_data(self, raw_data):
-        pass
-
-    def _check_sts(self, sts):
-        pass
-
-    def _check_parameters(self, parameters):
-        return parameters
 
 ##---TESTS
 

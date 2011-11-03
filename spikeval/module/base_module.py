@@ -71,20 +71,17 @@ class BaseModule(object):
         self._stage = 0
         self.logger = Logger.get_logger(log)
         self.parameters = self.check_parameters(parameters)
-        self.check_raw_data(raw_data)
-        self.check_sts_gt(sts_gt)
-        self.check_sts_ev(sts_ev)
-        self.raw_data = raw_data
-        self.sts_gt = sts_gt
-        self.sts_ev = sts_ev
+        self.raw_data = self.check_raw_data(raw_data)
+        self.sts_gt = self.check_sts_gt(sts_gt)
+        self.sts_ev = self.check_sts_ev(sts_ev)
         self.result = []
 
         # check RESULT_TYPES
         if not all(map(issubclass, self.RESULT_TYPES,
                        len(self.RESULT_TYPES) * [ModuleResult])):
-            raise ModuleExecutionError('not all result types are not derived '
-                                       'from :ModuleResult\n%s' %
-                                       self.RESULT_TYPES)
+            raise ModuleExecutionError(
+                'not all result types are derived from : ModuleResult\n%s' %
+                self.RESULT_TYPES)
         self._stage = 1
 
     @property
@@ -100,12 +97,13 @@ class BaseModule(object):
         :type raw_data: ndarray
         :param raw_data: raw data
         :raise ModuleInputError: if :raw_data: does not validate
+        :return: valid raw data
         """
 
         self._check_raw_data(raw_data)
 
     def _check_raw_data(self, raw_data):
-        raise NotImplementedError
+        return None
 
     def check_sts_gt(self, sts_gt):
         """check if :sts_gt: is a valid ground truth spike train set
@@ -113,12 +111,13 @@ class BaseModule(object):
         :type sts_gt: dict
         :param sts_gt: ground truth spike train set to validate
         :raise ModuleInputError: if :sts_gt: does not validate
+        :return: valid ground truth spike train set
         """
 
         self._check_sts_gt(sts_gt)
 
     def _check_sts_gt(self, sts_gt):
-        raise NotImplementedError
+        return None
 
     def check_sts_ev(self, sts_ev):
         """check if :sts_ev: is a valid evaluation spike train set
@@ -126,12 +125,13 @@ class BaseModule(object):
         :type sts_ev: dict
         :param sts_ev: evaluation spike train set to validate
         :raise ModuleInputError: if :sts_ev: does not validate
+        :return: valid evaluation spike train set
         """
 
         self._check_sts_ev(sts_ev)
 
     def _check_sts_ev(self, sts_ev):
-        raise NotImplementedError
+        return None
 
     def check_parameters(self, parameters):
         """check parameters
@@ -144,7 +144,7 @@ class BaseModule(object):
         return self._check_parameters(parameters)
 
     def _check_parameters(self, parameters):
-        raise NotImplementedError
+        return {}
 
     def apply(self):
         self._stage = 2

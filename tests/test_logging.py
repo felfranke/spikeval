@@ -13,7 +13,7 @@ __docformat__ = 'restructuredtext'
 ##---IMPORTS
 
 try:
-    # for python <= 2.7.x
+    # for python < 2.7.x
     import unittest2 as unittest
 except ImportError:
     import unittest

@@ -19,7 +19,7 @@ import spikeplot
 from mdp.nodes import PCANode
 from .base_module import BaseModule, ModuleInputError, ModuleExecutionError
 from .result_types import MRPlot
-from ..util import extract_spikes
+from ..util import extract_spikes, dict_arrsort, dict_list2arr
 
 spikeplot.mpl.interactive(False)
 
@@ -47,14 +47,15 @@ class ModDataPlot(BaseModule):
         if raw_data.shape[0] < sum(self.parameters['cut']):
             raise ModuleInputError('raw_data: '
                                    'fewer samples than waveform length!')
-
-    def _check_sts_gt(self, sts_gt):
-        pass
+        return raw_data
 
     def _check_sts_ev(self, sts_ev):
         if sts_ev is None:
             raise ModuleInputError('sts_ev: '
                                    'needs evaluation spike train set')
+        dict_list2arr(sts_ev)
+        dict_arrsort(sts_ev)
+        return sts_ev
 
     def _check_parameters(self, parameters):
         return {
