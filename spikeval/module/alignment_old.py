@@ -15,8 +15,8 @@ __all__ = ['align_spike_trains', 'similarity', 'simi', 'overlaps',
 
 ##--- IMPORTS
 
-import scipy as sp
-from ..util import dict_arrsort, dict_list2arr
+import scipy as sp_
+from spikeval.util import dict_arrsort, dict_list2arr, matrix_argmax
 
 
 ##--- FUNCTIONS
@@ -107,10 +107,10 @@ def align_spike_trains(G, E, max_shift=15, max_jitter=6, max_overlap_dist=45):
     n = len(G)
     m = len(E)
 
-    similarity_matrix = sp.zeros((n, m))
-    shift_matrix = sp.zeros((n, m))
+    similarity_matrix = sp_.zeros((n, m))
+    shift_matrix = sp_.zeros((n, m))
 
-    rval = {'sfuncs':sp.zeros((n, m, 2 * max_shift + 1))}
+    rval = {'sfuncs':sp_.zeros((n, m, 2 * max_shift + 1))}
 
     # compute similarity score and optimal shift between all pairs of spike
     # trains
@@ -123,12 +123,12 @@ def align_spike_trains(G, E, max_shift=15, max_jitter=6, max_overlap_dist=45):
 
     # shift all estimated spike trains so that they fit optimal to the best
     # matching true spike train
-    u_f2k = sp.zeros(m)
-    delta_shift = sp.zeros(m)
+    u_f2k = sp_.zeros(m)
+    delta_shift = sp_.zeros(m)
     for j in xrange(m):
         myidx = similarity_matrix[:, j].argmax()
-        elta_shift[j] = shift_matrix[myidx, j]
-        E[E.keys()[j]] = sp.array(E[E.keys()[j]]) + delta_shift[j]
+        delta_shift[j] = shift_matrix[myidx, j]
+        E[E.keys()[j]] = sp_.array(E[E.keys()[j]]) + delta_shift[j]
 
     # sort the spiketrain pairings according to their similarity measure
     # this ensures that the best matching spiketrains will get all
@@ -138,7 +138,7 @@ def align_spike_trains(G, E, max_shift=15, max_jitter=6, max_overlap_dist=45):
     S = similarity_matrix.copy()
     for i in xrange(n * m):
         maxidx = S.argmax()
-        sorted_tupels.append((int(sp.floor(maxidx / m)), maxidx % m))
+        sorted_tupels.append((int(sp_.floor(maxidx / m)), maxidx % m))
         S[sorted_tupels[i]] = -1
 
     # init alignment dictonary
@@ -152,14 +152,14 @@ def align_spike_trains(G, E, max_shift=15, max_jitter=6, max_overlap_dist=45):
     # convert G and E to lists, otherwise we cant remove objects
     GBlocked = {}
     EBlocked = {}
-    rval['num_known'] = sp.zeros(n)
+    rval['num_known'] = sp_.zeros(n)
     for i in xrange(n):
         rval['num_known'][i] = G[G.keys()[i]].shape[0]
-        GBlocked[G.keys()[i]] = sp.zeros(G[G.keys()[i]].shape)
-    rval['num_found'] = sp.zeros(m)
+        GBlocked[G.keys()[i]] = sp_.zeros(G[G.keys()[i]].shape)
+    rval['num_found'] = sp_.zeros(m)
     for j in xrange(m):
         rval['num_found'][j] = E[E.keys()[j]].shape[0]
-        EBlocked[E.keys()[j]] = sp.zeros(E[E.keys()[j]].shape)
+        EBlocked[E.keys()[j]] = sp_.zeros(E[E.keys()[j]].shape)
 
     # GBlocked will contain for every _inserted_ spike a 0 or a 1
     # 0: it was not assigned to any of the found spike trains => false
@@ -173,7 +173,7 @@ def align_spike_trains(G, E, max_shift=15, max_jitter=6, max_overlap_dist=45):
     # 1: it was assigned to a spike of G => it will be handled when G is
     # analyzed!
 
-    spike_number_assignment_matrix = sp.zeros((n, m))
+    spike_number_assignment_matrix = sp_.zeros((n, m))
     # run over the sorted tupels and block all established spike assignments
     for i in xrange(n * m):
         k1idx = sorted_tupels[i][0]
@@ -217,8 +217,8 @@ def align_spike_trains(G, E, max_shift=15, max_jitter=6, max_overlap_dist=45):
     # some will be treated as being not found (FNs).
 
     # Assignment vectors between true and estimated units
-    u_k2f = sp.ones(n, dtype=sp.int16) * -1
-    u_f2k = sp.ones(m, dtype=sp.int16) * -1
+    u_k2f = sp_.ones(n, dtype=sp_.int16) * -1
+    u_f2k = sp_.ones(m, dtype=sp_.int16) * -1
 
     nAssociations = min(n, m)
     found = 0
@@ -227,7 +227,7 @@ def align_spike_trains(G, E, max_shift=15, max_jitter=6, max_overlap_dist=45):
     blocked_cols = []
     snam = spike_number_assignment_matrix.copy()
     while (found < nAssociations) and (count < n * m):
-        i, j = U.matrix_argmax(snam)
+        i, j = matrix_argmax(snam)
         if i not in blocked_rows and j not in blocked_cols:
             blocked_rows.append(i)
             u_k2f[i] = j
@@ -255,24 +255,24 @@ def align_spike_trains(G, E, max_shift=15, max_jitter=6, max_overlap_dist=45):
     # initialize dictionaries for labels for all spikes
     GL = {}
     for k in G.keys():
-        GL[k] = sp.zeros(G[k].shape, dtype=sp.int16)
+        GL[k] = sp_.zeros(G[k].shape, dtype=sp_.int16)
     EL = {}
     for k in E.keys():
-        EL[k] = sp.zeros(E[k].shape, dtype=sp.int16)
+        EL[k] = sp_.zeros(E[k].shape, dtype=sp_.int16)
 
 
     # run over every single spike and check which label it gets
     #             1      2      3     4       5     6      7
     labelList = ['TP', 'TPO', 'FP', 'FPA', 'FPAO', 'FN', 'FNO']
-    TP = sp.zeros(n)
-    TPO = sp.zeros(n)
-    FP = sp.zeros(m) # m !!
-    FPA = sp.zeros(n)
-    FPAO = sp.zeros(n)
-    FPA_E = sp.zeros(m) # m!!
-    FPAO_E = sp.zeros(m) # m!!
-    FN = sp.zeros(n)
-    FNO = sp.zeros(n)
+    TP = sp_.zeros(n)
+    TPO = sp_.zeros(n)
+    FP = sp_.zeros(m) # m !!
+    FPA = sp_.zeros(n)
+    FPAO = sp_.zeros(n)
+    FPA_E = sp_.zeros(m) # m!!
+    FPAO_E = sp_.zeros(m) # m!!
+    FN = sp_.zeros(n)
+    FNO = sp_.zeros(n)
     # handle the spikes which were aligned first
     for i in xrange(n):
         k1 = G.keys()[i]
@@ -375,7 +375,7 @@ def align_spike_trains(G, E, max_shift=15, max_jitter=6, max_overlap_dist=45):
     # ???? ->This way an assignment error counts as 2 errors (one FP and one
     # FN).
 
-    remaining_found_units = sp.ones(m)
+    remaining_found_units = sp_.ones(m)
     # Build the assignment rows and unassigned ground truth spike train rows
     # first
     for i in xrange(n):
@@ -425,7 +425,7 @@ def similarity(st1, st2, mtau):
     """
     Calculates the cross correlation function between two spike trains
     """
-    sfunc = sp.zeros(2 * mtau + 1)
+    sfunc = sp_.zeros(2 * mtau + 1)
     for tau in xrange(-mtau, mtau + 1):
         sfunc[tau + mtau] = simi(st1, st2 + tau)
     return sfunc
@@ -460,8 +460,8 @@ def overlaps(G, window):
     n = len(G)
     O = {}
     for k in G.keys():
-        O[k] = sp.zeros(G[k].shape, dtype=sp.bool_)
-    Onums = sp.zeros(len(G))
+        O[k] = sp_.zeros(G[k].shape, dtype=sp_.bool_)
+    Onums = sp_.zeros(len(G))
     # run over all pairs of spike trains in G
     for i in xrange(n):
         for j in xrange(i + 1, n):
@@ -541,11 +541,11 @@ def print_nice_table(ret):
 ##--- MAIN
 
 if __name__ == '__main__':
-    G = {'0':sp.array([1, 100, 200, 301, 400]),
-         1:sp.array([50, 150, 250, 303, 350])}
+    G = {'0':sp_.array([1, 100, 200, 301, 400]),
+         1:sp_.array([50, 150, 250, 303, 350])}
 
-    E = {0:sp.array([1, 100, 200, 305, 307]),
-         1:sp.array([50, 150, 250, 590, 550, 648, 720])}
+    E = {0:sp_.array([1, 100, 200, 305, 307]),
+         1:sp_.array([50, 150, 250, 590, 550, 648, 720])}
 
     ret = align_spike_trains(G, E, max_shift=2, max_jitter=12)
     from plot import P, spike_trains
@@ -558,13 +558,13 @@ if __name__ == '__main__':
     print ret['alignment']
 
 #    G = {}
-#    G['0'] = sp.array([40, 80, 90, 170, 400])
-#    G[1] = sp.array([42, 150, 180, 190, 350])
-#    G[2] = sp.array([39, 80, 150, 405])
+#    G['0'] = sp_.array([40, 80, 90, 170, 400])
+#    G[1] = sp_.array([42, 150, 180, 190, 350])
+#    G[2] = sp_.array([39, 80, 150, 405])
 #
 #    E = {}
-#    E[0] = sp.array([42, 80, 170, 401])
-#    E[1] = sp.array([40, 90, 150, 180, 190, 250, 348, 420])
+#    E[0] = sp_.array([42, 80, 170, 401])
+#    E[1] = sp_.array([40, 90, 150, 180, 190, 250, 348, 420])
 #
 #    #ret = align_spike_trains(G, E, maxshift=2, maxjitter=2)
 #    # print ret
@@ -576,15 +576,15 @@ if __name__ == '__main__':
 #    print 'Done Plot 1.'
 #
 #    G = {}
-#    G['0'] = sp.array([40, 80, 90, 170, 400])
-#    G[1] = sp.array([42, 150, 180, 190, 350])
-#    G[2] = sp.array([39, 80, 150, 405])
+#    G['0'] = sp_.array([40, 80, 90, 170, 400])
+#    G[1] = sp_.array([42, 150, 180, 190, 350])
+#    G[2] = sp_.array([39, 80, 150, 405])
 #
 #    E = {}
-#    E[3] = sp.array([42, 80, 170, 401])
-#    E['Multi Unit 1'] = sp.array([40, 90, 150, 180, 190, 250, 348, 420])
-#    E[4] = sp.array([37, 79, 96, 149, 201, 405])
-#    E['Multi Unit 2'] = sp.array([10, 20, 30, 40, 50, 60, 60, 170])
+#    E[3] = sp_.array([42, 80, 170, 401])
+#    E['Multi Unit 1'] = sp_.array([40, 90, 150, 180, 190, 250, 348, 420])
+#    E[4] = sp_.array([37, 79, 96, 149, 201, 405])
+#    E['Multi Unit 2'] = sp_.array([10, 20, 30, 40, 50, 60, 60, 170])
 #
 #    ret = align_spike_trains(G, E, maxshift=2, maxjitter=2,
 #                             maxoverlapdistance=5)

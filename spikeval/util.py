@@ -9,7 +9,7 @@
 """general utility/tools for dictionary and array handling"""
 __docformat__ = 'restructuredtext'
 __all__ = ['dict_list2arr', 'dict_arrsort', 'extract_spikes', 'jitter_st',
-           'jitter_sts']
+           'jitter_sts', 'matrix_argmax', 'matrix_argmin']
 
 
 ##---IMPORTS
@@ -129,6 +129,32 @@ def jitter_sts(sts, jitter, start=None, end=None):
     for k, v in sts.items():
         sts[k] = jitter_st(sts[k], jitter, start=start, end=end)
     return sts
+
+
+def matrix_argmax(M):
+    """returns the indices (row,col) of the maximum in M
+
+    :type M: ndarray
+    :param M: matrix
+    :returns: tuple: indices of the max in M
+    """
+    idx = sp.nanargmax(M)
+    j = int(idx % M.shape[1])
+    i = int(sp.floor(idx / M.shape[1]))
+    return i, j
+
+
+def matrix_argmin(M):
+    """returns the indices (row,col) of the minimum in M
+
+    :type M: ndarray
+    :param M: matrix
+    :returns: tuple: indices of the min in M
+    """
+    idx = sp.nanargmin(M)
+    j = int(idx % M.shape[1])
+    i = int(sp.floor(idx / M.shape[1]))
+    return i, j
 
 ##---MAIN
 

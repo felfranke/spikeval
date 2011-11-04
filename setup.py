@@ -64,5 +64,5 @@ if __name__ == "__main__":
               'Operating System :: OS Independent',
               'Programming Language :: Python',
               'Topic :: Scientific/Engineering :: Bio-Informatics',
-              'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
-              ])
+              'Topic :: Internet :: WWW/HTTP :: Dynamic Content'
+          ])

@@ -13,7 +13,6 @@ __all__ = ['BaseModule', 'ModuleInputError', 'ModuleExecutionError']
 
 ##---IMPORTS
 
-import scipy as sp
 from ..logging import Logger
 from .result_types import ModuleResult
 

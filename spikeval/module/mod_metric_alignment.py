@@ -18,7 +18,7 @@ __all__ = ['ModMetricAlignment']
 import scipy as sp
 from .base_module import BaseModule, ModuleInputError, ModuleExecutionError
 from .result_types import MRTable, MRDict
-from ..util import dict_arrsort, dict_list2arr
+from ..util import dict_arrsort, dict_list2arr, matrix_argmax
 
 
 ##---CLASSES
@@ -28,25 +28,20 @@ class ModMetricAlignment(BaseModule):
 
     computes the evaluation of spike sorting
 
-    self.sts_ev contains the sorted spike
-    trains - given the real/ideal/ground truth spike trains in self.sts_gt
+    self.sts_ev contains the sorted spike trains - given the
+    real/ideal/ground truth spike trains in self.sts_gt
 
-    Calculates the similarity matrix between all pairs of spike trains
-    from
+    Calculates the similarity matrix between all pairs of spike trains from
     the
     ground truth and the estimation. This is used to find the optimal
-    assignment
-    between the spike trains, if one is a ground truth and the other is an
-    estimation.
+    assignment between the spike trains, if one is a ground truth and the
+    other is an estimation.
 
     Assignment Matrix:
         A label is assigned to every estimated spike. The following table
-        lists
-        all possible labels, given the different configurations is the
-        ground truth. We assume E1 was found TO correlate with G1 and E2
-         is
-        corresponding to G2. A "1" indicates a spike w.r.t. shift and
-        jitter.
+        lists all possible labels, given the different configurations is the
+        ground truth. We assume E1 was found TO correlate with G1 and E2 is
+        corresponding to G2. A "1" indicates a spike w.r.t. shift and jitter.
 
         =====  === === ===== == == ===== ====== ===== =====
         G1      1        1       1   1                  1
@@ -64,28 +59,28 @@ class ModMetricAlignment(BaseModule):
             E1 spike is assigned to non associated ground truth spike
             train.
         TPOvp : true positive and overlap
-            E1 spike is assigned to associated ground truth spike train
-            and this spike participates in an overlap with another
-            ground truth spike train.
+            E1 spike is assigned to associated ground truth spike train and
+            this spike participates in an overlap with another ground truth
+            spike train.
         FP : false positive
             E1 spike is not assigned to any ground truth spike.
         FN : false negative
-            There is no E1 spike for a spike in the associated ground
-            truth spike train.
+            There is no E1 spike for a spike in the associated ground truth
+            spike train.
         FNOvp : false negative and overlap
-            There is no E1 spike for a spike in the associated ground
-            truth spike train and this spike participates in an overlap
-            with another ground truth spike train.
+            There is no E1 spike for a spike in the associated ground truth
+            spike train and this spike participates in an overlap with
+            another ground truth spike train.
         FPAOvp
-            E1 spike is assigned to a spike of a non associated ground
-            truth spike train and this spike participates in an overlap.
+            E1 spike is assigned to a spike of a non associated ground truth
+             spike train and this spike participates in an overlap.
 
     :Parameters:
         self.sts_gt : dict of ndarray
-            dict containing 1d ndarrays/lists of integers,representing the
+            dict containing 1d ndarrays/lists of integers, representing the
             single unit spike trains. This is the ground truth.
         self.sts_ev : dict of ndarray
-            dict containing 1d ndarrays/lists of integers,representing the
+            dict containing 1d ndarrays/lists of integers, representing the
             single unit spike trains. this is the estimation.
         maxshift : int
             Upper bound for the tested shift of spike trains towards each
@@ -288,7 +283,7 @@ class ModMetricAlignment(BaseModule):
         blocked_cols = []
         snam = spike_no_assignment_matrix.copy()
         while (found < nAssociations) and (count < n * m):
-            i, j = U.matrix_argmax(snam)
+            i, j = matrix_argmax(snam)
             if i not in blocked_rows and j not in blocked_cols:
                 blocked_rows.append(i)
                 u_k2f[i] = j
@@ -363,13 +358,13 @@ class ModMetricAlignment(BaseModule):
                             FPA_E[j] += 1 # Count assignment errors twice!
 
             # Now check all spikes of i which have no labels. those are FNs
-            for sp in xrange(len(GL[k1])):
-                if GL[k1][sp] == 0:
-                    if O[k1][sp] == 1:
-                        GL[k1][sp] = 7  # FNO
+            for spk in xrange(len(GL[k1])):
+                if GL[k1][spk] == 0:
+                    if O[k1][spk] == 1:
+                        GL[k1][spk] = 7  # FNO
                         FNO[i] += 1
                     else:
-                        GL[k1][sp] = 6  # FN
+                        GL[k1][spk] = 6  # FN
                         FN[i] += 1
                         # The last thing to do is to check all labels of
                         # spikes in self.sts_ev. Those which have no label
@@ -377,11 +372,10 @@ class ModMetricAlignment(BaseModule):
         for j in xrange(m):
             k2 = self.sts_ev.keys()[j]
             FP[j] = 0
-            for sp in xrange(len(EL[k2])):
-                if EL[k2][sp] == 0:
-                    EL[k2][sp] = 3 # FP
+            for spk in xrange(len(EL[k2])):
+                if EL[k2][spk] == 0:
+                    EL[k2][spk] = 3 # FP
                     FP[j] += 1
-
 
         # Build return _value dictionary
         self.result = [

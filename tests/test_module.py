@@ -20,8 +20,6 @@ except ImportError:
 
 import sys
 import scipy as sp
-from spikeval.module.base_module import *
-from spikeval.module.result_types import *
 from spikeval.module import ModDataPlot, ModMetricAlignment
 
 
@@ -62,6 +60,8 @@ class TestModule(unittest.TestCase):
             self.sts_ev,
             sys.stdout)
         mod.apply()
+        for item in mod.result:
+            print item
         self.assertEqual(mod.status, 'finalised')
 
 if __name__ == '__main__':
