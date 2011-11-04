@@ -116,16 +116,6 @@ class ModMetricAlignment(BaseModule):
         MRTable, # sp.atleast_2d(u_f2k)
     ]
 
-    def _check_raw_data(self, raw_data):
-        if raw_data is None:
-            raise ModuleInputError('raw_data: '
-                                   'needs raw data!')
-        raw_data = sp.asanyarray(raw_data)
-        if raw_data.ndim != 2:
-            raise ModuleInputError('rawdata: '
-                                   'ndim != 2')
-        return raw_data
-
     def _check_sts_gt(self, sts_gt):
         if sts_gt is None:
             raise ModuleInputError('sts_gt: '
