@@ -15,12 +15,15 @@ from setuptools import setup, find_packages
 def find_version():
     """read version from __init__"""
     rval = '-1'
-    with open('./spikeval/__init__.py', 'r') as f:
+    f = open('./spikeval/__init__.py', 'r')
+    try:
         for line in f:
             if line.startswith('__version__'):
                 rval = line.split()[-1][1:-1]
                 break
-    return rval
+    finally:
+        f.close()
+        return rval
 
 DESC_TITLE = "SpikEval : systematic evaluation of spike sorting"
 DESC_LONG = ''.join([DESC_TITLE, '\n\n', open('README', 'r').read()])
@@ -32,13 +35,13 @@ if __name__ == "__main__":
           packages=find_packages(),
           include_package_data=True,
           install_requires=[
-              'scipy>=0.7.0',
+              'scipy>=0.6.0',
               'matplotlib>=0.98',
               'spikeplot>=0.1.0',
               'tables>=2.0',
               'texttable>=0.8',
               'PIL>=1.1.6',
-              'mdp>=3.1',
+              'mdp>=2.5',
               ],
           requires=[],
 

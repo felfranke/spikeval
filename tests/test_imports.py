@@ -29,7 +29,7 @@ class TestImports(unittest.TestCase):
 
         import scipy
 
-        self.assertGreaterEqual(scipy.__version__, '0.7')
+        self.assertGreaterEqual(scipy.__version__, '0.6')
 
     def test_tables(self):
         """test for tables"""
@@ -65,7 +65,7 @@ class TestImports(unittest.TestCase):
 
         import mdp
 
-        self.assertGreaterEqual(mdp.__version__, '3.1')
+        self.assertGreaterEqual(mdp.__version__, '2.5')
 
 if __name__ == '__main__':
     unittest.main()

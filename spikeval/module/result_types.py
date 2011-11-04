@@ -212,37 +212,4 @@ class MRPlot(ModuleResult):
 ##---MAIN
 
 if __name__ == '__main__':
-    res = ModuleResult()
-    print res
-    print
-
-    res = MRScalar(5)
-    print res
-    print
-
-    res = MRTable([[1, 0], [0, 1]])
-    print res
-    print res.shape
-    print
-
-    res = MRTable([[1, 0], [0, 1]], ['Abc', 'Bcd'])
-    print res
-    print res.shape
-    print
-
-    res = MRTable([[1, 2, 3]])
-    print res
-    print res.shape
-    print
-
-    res = MRDict(zip(range(10), map(chr, range(32, 45))))
-    print res
-    print
-
-    fig = spikeplot.mcdata(sp.randn(1000, 2))
-    res = MRPlot(fig)
-    print res
-    print
-
-    print res.BASE
-    print
+    pass

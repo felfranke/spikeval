@@ -10,33 +10,116 @@
 
 """spike train alignment metric"""
 __docformat__ = 'restructuredtext'
-__all__ = ['align_spike_trains', 'similarity', 'simi', 'overlaps',
-           'nice_table_from_analysis', 'csv_from_analysis',
-           'print_nice_table']
+__all__ = ['ModMetricAlignment']
 
 
 ##--- IMPORTS
 
 import scipy as sp
 from .base_module import BaseModule, ModuleInputError, ModuleExecutionError
-from .result_types import MRPlot
+from .result_types import MRTable, MRDict
 from ..util import dict_arrsort, dict_list2arr
 
 
 ##---CLASSES
 
-class ModMetricAlignmentPlot(BaseModule):
-    """module: metric for spike train alignment"""
+class ModMetricAlignment(BaseModule):
+    """module: metric for spike train alignment
+
+    computes the evaluation of spike sorting
+
+    self.sts_ev contains the sorted spike
+    trains - given the real/ideal/ground truth spike trains in self.sts_gt
+
+    Calculates the similarity matrix between all pairs of spike trains
+    from
+    the
+    ground truth and the estimation. This is used to find the optimal
+    assignment
+    between the spike trains, if one is a ground truth and the other is an
+    estimation.
+
+    Assignment Matrix:
+        A label is assigned to every estimated spike. The following table
+        lists
+        all possible labels, given the different configurations is the
+        ground truth. We assume E1 was found TO correlate with G1 and E2
+         is
+        corresponding to G2. A "1" indicates a spike w.r.t. shift and
+        jitter.
+
+        =====  === === ===== == == ===== ====== ===== =====
+        G1      1        1       1   1                  1
+        G2          1    1                 1
+        G3                           1     1      1
+        =====  === === ===== == == ===== ====== ===== =====
+        E1      1   1    1    1            1      1     1
+        E2               1                        1     1
+        =====  === === ===== == == ===== ====== ===== =====
+        label  TP  FPA TPOvp FP FN FNOvp FPAOvp FPOGT
+
+        TP : true positive
+            E1 spike is assigned to associated ground truth spike train.
+        FPA
+            E1 spike is assigned to non associated ground truth spike
+            train.
+        TPOvp : true positive and overlap
+            E1 spike is assigned to associated ground truth spike train
+            and this spike participates in an overlap with another
+            ground truth spike train.
+        FP : false positive
+            E1 spike is not assigned to any ground truth spike.
+        FN : false negative
+            There is no E1 spike for a spike in the associated ground
+            truth spike train.
+        FNOvp : false negative and overlap
+            There is no E1 spike for a spike in the associated ground
+            truth spike train and this spike participates in an overlap
+            with another ground truth spike train.
+        FPAOvp
+            E1 spike is assigned to a spike of a non associated ground
+            truth spike train and this spike participates in an overlap.
+
+    :Parameters:
+        self.sts_gt : dict of ndarray
+            dict containing 1d ndarrays/lists of integers,representing the
+            single unit spike trains. This is the ground truth.
+        self.sts_ev : dict of ndarray
+            dict containing 1d ndarrays/lists of integers,representing the
+            single unit spike trains. this is the estimation.
+        maxshift : int
+            Upper bound for the tested shift of spike trains towards each
+            other
+            Default=15
+        maxjitter : int
+            upper bound for the tested jitter tolerance
+            Default=6
+        maxoverlapdistance : int
+            upper bound for the tested overlap distance
+            Default=45
+    """
 
     # module interface
 
     RESULT_TYPES = [
-        MRPlot, # waveforms by units
-        MRPlot, # waveforms all spikes
-        MRPlot, # cluster PC1/2
-        MRPlot, # cluster PC3/4
-        MRPlot, # cluster projection
-        MRPlot] # spike train set
+        MRTable, # similarity_matrix
+        MRTable, # shift_matrix
+        MRTable, # sp.atleast_2d(delta_shift)
+        MRDict, # alignment
+        MRDict, # O
+        MRTable, # spike_no_assignment_matrix
+        MRDict, # EL
+        MRDict, # GL
+        MRTable, # sp.atleast_2d(TP)
+        MRTable, # sp.atleast_2d(TPO)
+        MRTable, # sp.atleast_2d(FPA)
+        MRTable, # sp.atleast_2d(FPAO)
+        MRTable, # sp.atleast_2d(FN)
+        MRTable, # sp.atleast_2d(FNO)
+        MRTable, # sp.atleast_2d(FP)
+        MRTable, # sp.atleast_2d(u_k2f)
+        MRTable, # sp.atleast_2d(u_f2k)
+    ]
 
     def _check_raw_data(self, raw_data):
         if raw_data is None:
@@ -46,9 +129,6 @@ class ModMetricAlignmentPlot(BaseModule):
         if raw_data.ndim != 2:
             raise ModuleInputError('rawdata: '
                                    'ndim != 2')
-        if raw_data.shape[0] < sum(self.parameters['cut']):
-            raise ModuleInputError('raw_data: '
-                                   'fewer samples than waveform length!')
         return raw_data
 
     def _check_sts_gt(self, sts_gt):
@@ -68,143 +148,49 @@ class ModMetricAlignmentPlot(BaseModule):
         return sts_ev
 
     def _check_parameters(self, parameters):
-        sr = parameters.get('sampling_rate', 32000.0)
         return {
             'sampling_rate':parameters.get('sampling_rate', 32000.0),
             'name':parameters.get('name', 'noname'),
-            'maxshift':parameters.get('maxshift',15),
-            'maxjitter':parameters.get('maxjitter',6),
-            'maxoverlapdistance':parameters.get('maxoverlapdistance',45),}
-
-    #    maxshift : int
-    #        Upper bound for the tested shift of spike trains towards each
-    #        other
-    #        Default=15
-    #    maxjitter : int
-    #        upper bound for the tested jitter tolerance
-    #        Default=6
-    #    maxoverlapdistance : int
-    #        upper bound for the tested overlap distance
-    #        Default=45
+            'maxshift':parameters.get('maxshift', 15),
+            'maxjitter':parameters.get('maxjitter', 6),
+            'maxoverlapdistance':parameters.get('maxoverlapdistance', 45), }
 
     def _apply(self):
-        """computes the evaluation of spike sorting
-
-        self.sts_ev contains the sorted spike
-        trains - given the real/ideal/ground truth spike trains in self.sts_gt
-
-        Calculates the similarity matrix between all pairs of spike trains
-        from
-        the
-        ground truth and the estimation. This is used to find the optimal
-        assignment
-        between the spike trains, if one is a ground truth and the other is an
-        estimation.
-
-        Assignment Matrix:
-            A label is assigned to every estimated spike. The following table
-            lists
-            all possible labels, given the different configurations is the
-            ground truth. We assume E1 was found TO correlate with G1 and E2
-             is
-            corresponding to G2. A "1" indicates a spike w.r.t. shift and
-            jitter.
-
-            =====  === === ===== == == ===== ====== ===== =====
-            G1      1        1       1   1                  1
-            G2          1    1                 1
-            G3                           1     1      1
-            =====  === === ===== == == ===== ====== ===== =====
-            E1      1   1    1    1            1      1     1
-            E2               1                        1     1
-            =====  === === ===== == == ===== ====== ===== =====
-            label  TP  FPA TPOvp FP FN FNOvp FPAOvp FPOGT
-
-            TP : true positive
-                E1 spike is assigned to associated ground truth spike train.
-            FPA
-                E1 spike is assigned to non associated ground truth spike
-                train.
-            TPOvp : true positive and overlap
-                E1 spike is assigned to associated ground truth spike train
-                and this spike participates in an overlap with another
-                ground truth spike train.
-            FP : false positive
-                E1 spike is not assigned to any ground truth spike.
-            FN : false negative
-                There is no E1 spike for a spike in the associated ground
-                truth spike train.
-            FNOvp : false negative and overlap
-                There is no E1 spike for a spike in the associated ground
-                truth spike train and this spike participates in an overlap
-                with another ground truth spike train.
-            FPAOvp
-                E1 spike is assigned to a spike of a non associated ground
-                truth spike train and this spike participates in an overlap.
-
-        :Returns:
-            dict : dict with lots of entries [specify this!]
-
-        :Parameters:
-            self.sts_gt : dict of ndarray
-                dict containing 1d ndarrays/lists of integers,representing the
-                single unit spike trains. This is the ground truth.
-            self.sts_ev : dict of ndarray
-                dict containing 1d ndarrays/lists of integers,representing the
-                single unit spike trains. this is the estimation.
-            maxshift : int
-                Upper bound for the tested shift of spike trains towards each
-                other
-                Default=15
-            maxjitter : int
-                upper bound for the tested jitter tolerance
-                Default=6
-            maxoverlapdistance : int
-                upper bound for the tested overlap distance
-                Default=45
-        """
-        # DOC: this documentation needs to be more precise on the return
-        # part!!
-
         # inits and checks
-        self.sts_gt = dict_list2arr(self.sts_gt)
-        self.sts_ev = dict_list2arr(self.sts_ev)
-        self.sts_gt = dict_arrsort(self.sts_gt)
-        self.sts_ev = dict_arrsort(self.sts_ev)
         n = len(self.sts_gt)
         m = len(self.sts_ev)
-
+        max_shift = self.parameters['maxshift']
+        max_jitter = self.parameters['maxjitter']
+        max_oldist = self.parameters['maxoverlapdistance']
         similarity_matrix = sp.zeros((n, m))
         shift_matrix = sp.zeros((n, m))
-
-        rval = {'sfuncs':sp.zeros((n, m, 2 * max_shift + 1))}
+        sfuncs = sp.zeros((n, m, 2 * max_shift + 1))
 
         # compute similarity score and optimal shift between all pairs of
-        # spike
-        # trains
+        # spike trains
         for i in xrange(n):
             for j in xrange(m):
-                sfunc = similarity(self.sts_gt[self.sts_gt.keys()[i]],
-                                   self.sts_ev[self.sts_ev.keys()[j]],
-                                   max_shift)
+                sfunc = ModMetricAlignment.similarity(
+                    self.sts_gt[self.sts_gt.keys()[i]],
+                    self.sts_ev[self.sts_ev.keys()[j]],
+                    max_shift)
                 similarity_matrix[i, j] = sfunc.max()
                 shift_matrix[i, j] = sfunc.argmax() - max_shift
-                rval['sfuncs'][i, j, :] = sfunc
+                sfuncs[i, j, :] = sfunc
 
         # shift all estimated spike trains so that they fit optimal to the
-        # best
-        # matching true spike train
+        # best matching true spike train
         u_f2k = sp.zeros(m)
         delta_shift = sp.zeros(m)
         for j in xrange(m):
             myidx = similarity_matrix[:, j].argmax()
-            elta_shift[j] = shift_matrix[myidx, j]
-            self.sts_ev[self.sts_ev.keys()[j]] = sp.array(
-                self.sts_ev[self.sts_ev.keys()[j]]) + delta_shift[j]
+            delta_shift[j] = shift_matrix[myidx, j]
+            self.sts_ev[self.sts_ev.keys()[j]] =\
+            self.sts_ev[self.sts_ev.keys()[j]] + delta_shift[j]
 
         # sort the spiketrain pairings according to their similarity measure
-        # this ensures that the best matching spiketrains will get all
-        # the matching spikes. no spike that matches will thus be aligned to
+        # this ensures that the best matching spiketrains will get all the
+        # matching spikes. no spike that matches will thus be aligned to
         # another spike train.
         sorted_tupels = []
         S = similarity_matrix.copy()
@@ -221,36 +207,32 @@ class ModMetricAlignmentPlot(BaseModule):
                 alignment[(self.sts_gt.keys()[i], self.sts_ev.keys()[j])] = []
                 idx += 1
 
-        # convert self.sts_gt and self.sts_ev to lists,
-        # otherwise we cant remove objects
+        # convert self.sts_gt and self.sts_ev to lists, otherwise we cant
+        # remove objects
         GBlocked = {}
         EBlocked = {}
-        rval['num_known'] = sp.zeros(n)
+        num_known = sp.zeros(n)
         for i in xrange(n):
-            rval['num_known'][i] = self.sts_gt[self.sts_gt.keys()[i]].shape[0]
+            num_known[i] = self.sts_gt[self.sts_gt.keys()[i]].shape[0]
             GBlocked[self.sts_gt.keys()[i]] = sp.zeros(
                 self.sts_gt[self.sts_gt.keys()[i]].shape)
-        rval['num_found'] = sp.zeros(m)
+        num_found = sp.zeros(m)
         for j in xrange(m):
-            rval['num_found'][j] = self.sts_ev[self.sts_ev.keys()[j]].shape[0]
+            num_found[j] = self.sts_ev[self.sts_ev.keys()[j]].shape[0]
             EBlocked[self.sts_ev.keys()[j]] = sp.zeros(
                 self.sts_ev[self.sts_ev.keys()[j]].shape)
 
         # GBlocked will contain for every _inserted_ spike a 0 or a 1
-        # 0: it was not assigned to any of the found spike trains => false
-        # negatives
-        # 1: it was assigned to a spike of self.sts_ev => either true
-        # positive or false
-        #    negative + false positive wrong assignment
+        # 0: it was not assigned to any of the found spike trains => FN
+        # 1: it was assigned to a spike of self.sts_ev => either TP or FN +
+        #   FPA
         #
         # EBlocked will contain for every _found_ spike a 0 or a 1
-        # 0: it was not assigned to any of the inserted spike trains => false
-        # positive
+        # 0: it was not assigned to any of the inserted spike trains => FP
         # 1: it was assigned to a spike of self.sts_gt => it will be handled
-        # when self.sts_gt is
-        # analyzed!
+        # when self.sts_gt is analyzed!
 
-        spike_number_assignment_matrix = sp.zeros((n, m))
+        spike_no_assignment_matrix = sp.zeros((n, m))
         # run over the sorted tupels and block all established spike
         # assignments
         for i in xrange(n * m):
@@ -279,10 +261,9 @@ class ModMetricAlignmentPlot(BaseModule):
                     GBlocked[k1][idx1] = 1
                     EBlocked[k2][idx2] = 1
 
-                    spike_number_assignment_matrix[k1idx, k2idx] += 1
-                    # We cannot calculate TP/FP/FNs here,
-                    # since we dont yet know
-                    # which self.sts_gt belongs to which self.sts_ev (see
+                    spike_no_assignment_matrix[k1idx, k2idx] += 1
+                    # We cannot calculate TP/FP/FNs here, since we dont yet
+                    # know which self.sts_gt belongs to which self.sts_ev (see
                     # next step)
                 if train1[idx1] < train2[idx2]:
                     idx1 += 1
@@ -291,13 +272,10 @@ class ModMetricAlignmentPlot(BaseModule):
 
         # now establish the one to one relationships between the true and
         # found spike trains. this is a different relationship than the one
-        # before
-        # because there can maximal be min(n,m) associations. If there are
-        # more
-        # found spike trains than inserted (m>n), some wont have a partner and
-        # be thus treated as FPs. If there are more inserted than found
-        # (m>n) than
-        # some will be treated as being not found (FNs).
+        # before because there can maximal be min(n,m) associations. If there
+        # are more found spike trains than inserted (m>n), some wont have a
+        # partner and be thus treated as FPs. If there are more inserted than
+        # found (m>n) than some will be treated as being not found (FNs).
 
         # Assignment vectors between true and estimated units
         u_k2f = sp.ones(n, dtype=sp.int16) * -1
@@ -308,7 +286,7 @@ class ModMetricAlignmentPlot(BaseModule):
         count = 0
         blocked_rows = []
         blocked_cols = []
-        snam = spike_number_assignment_matrix.copy()
+        snam = spike_no_assignment_matrix.copy()
         while (found < nAssociations) and (count < n * m):
             i, j = U.matrix_argmax(snam)
             if i not in blocked_rows and j not in blocked_cols:
@@ -321,18 +299,14 @@ class ModMetricAlignmentPlot(BaseModule):
             count += 1
 
         # now we want to calculate FPs and FNs. Since in
-        # spike_number_assignment_matrix
-        # the assigned spikes are coded and in u_k2f and u_f2k the assignments
-        # of the
-        # units to each other, we can now compare the number of assignments to
-        # the total
-        # number of spikes in the corresponding trains. this will directly
-        # give
-        # the
+        # spike_no_assignment_matrix the assigned spikes are coded and in
+        # u_k2f and u_f2k the assignments of the units to each other, we can
+        # now compare the number of assignments to the total number of spikes
+        # in the corresponding trains. this will directly give the
         # correct/error numbers.
 
         # mark all the overlapping spikes
-        ret = overlaps(self.sts_gt, max_overlap_dist)
+        ret = ModMetricAlignment.overlaps(self.sts_gt, max_oldist)
         O = ret['O']
         NO = ret['Onums']
 
@@ -398,9 +372,8 @@ class ModMetricAlignmentPlot(BaseModule):
                         GL[k1][sp] = 6  # FN
                         FN[i] += 1
                         # The last thing to do is to check all labels of
-                        # spikes
-                        # in self.sts_ev. Those
-                        # which have no label yet are FPs
+                        # spikes in self.sts_ev. Those which have no label
+                        # yet are FPs
         for j in xrange(m):
             k2 = self.sts_ev.keys()[j]
             FP[j] = 0
@@ -411,124 +384,42 @@ class ModMetricAlignmentPlot(BaseModule):
 
 
         # Build return _value dictionary
-        rval['scores'] = similarity_matrix
-        rval['shifts'] = shift_matrix
-        rval['delta_shift'] = delta_shift
-        rval['alignment'] = alignment
-        rval['overlapping'] = O
-        rval['spike_number_assignment_matrix'] =\
-        spike_number_assignment_matrix
-        rval['EL'] = EL
-        rval['GL'] = GL
+        self.result = [
+            similarity_matrix, # table
+            shift_matrix, # table
+            sp.atleast_2d(delta_shift), # table
+            alignment, # dict
+            O, #dict
+            spike_no_assignment_matrix, # table
+            EL, # dict
+            GL, # dict
+            sp.atleast_2d(TP), # table
+            sp.atleast_2d(TPO), # table
+            sp.atleast_2d(FPA), # table
+            sp.atleast_2d(FPAO), # table
+            sp.atleast_2d(FN), # table
+            sp.atleast_2d(FNO), # table
+            sp.atleast_2d(FP), # table
+            sp.atleast_2d(u_k2f), # table
+            sp.atleast_2d(u_f2k), # table
+        ]
 
-        rval['TP'] = TP
-        rval['TPO'] = TPO
-        rval['FPA'] = FPA
-        rval['FPAO'] = FPAO
-        rval['FN'] = FN
-        rval['FNO'] = FNO
-        rval['FP'] = FP
+    @staticmethod
+    def similarity(st1, st2, mtau):
+        """calculates xcorr function between spike trains st1 and st2"""
 
-        rval['u_k2f'] = u_k2f
-        rval['u_f2k'] = u_f2k
-
-        # build pretty table
-        rval['table'] = []
-        rval['table'].append(['GT Unit ID', # ID of known Unit
-                              'Found Unit ID', # ID of associated found Unit
-                              'Known Spikes', # Number of Spikes of Known Unit
-                              'Overlapping Spikes',
-                              # Number of those Spikes participating in an
-                              # Overlap
-                              'Found Spikes', # Number of Spikes of Found Unit
-                              'True Pos',
-                              # Number of those Spikes which are assigned to
-                              # Spikes
-                              # of the associated known Unit.
-                              'True Pos Ovps', #
-                              'False Pos Assign GT',
-                              # Number of Spikes of Found Unit which are
-                              # assigned to a non-associated Unit
-                              'False Pos Assign Found',
-                              'False Pos Ovps GT', # FPAO
-                              'FPs Assign Ovps Found', # FPAO_E
-                              'False Neg',
-                              'False Neg Overlaps',
-                              'False Pos'])
-
-        # Build Table with one row for every assignment of two spike trains
-        # and
-        # one row for every unassigned spike train.
-        # TODO: The number of false positive assignments for one of the
-        # assignment
-        # rows has to be the sum of the individual assignement errors.
-        # ???? ->This way an assignment error counts as 2 errors (one FP and
-        # one
-        # FN).
-
-        remaining_found_units = sp.ones(m)
-        # Build the assignment rows and unassigned ground truth spike train
-        # rows
-        # first
-        for i in xrange(n):
-            unitk = self.sts_gt.keys()[i]
-            known = rval['num_known'][i]
-            overlapping = NO[i]
-            tp = TP[i]
-            tpo = TPO[i]
-            fn = FN[i]
-            fno = FNO[i]
-            fpa = FPA[i]
-            fpao = FPAO[i]
-
-            j = rval['u_k2f'][i]
-            unitf = ''
-            found = fp = fpae = fpaoe = 0
-            if j >= 0:
-                remaining_found_units[j] = 0
-                unitf = self.sts_ev.keys()[j]
-                found = rval['num_found'][j]
-                fp = FP[j]
-                fpae = FPA_E[j]
-                fpaoe = FPAO_E[j]
-
-            rval['table'].append([unitk, unitf, known, overlapping, found, tp,
-                                  tpo, fpa, fpae, fpao, fpaoe, fn, fno, fp])
-
-        # Append "False Positive Unit" which has all found spikes of found
-        # units
-        # which
-        # were not assigned to a ground truth unit
-        for j in xrange(m):
-            if remaining_found_units[j] == 1:
-                unitk = ''
-                known = overlapping = tp = tpo = fn = fno = fpa = fpao = 0
-                unitf = self.sts_ev.keys()[j]
-                found = rval['num_found'][j]
-                fp = FP[j]
-                fpae = FPA_E[j]
-                fpaoe = FPAO_E[j]
-                rval['table'].append(
-                    [unitk, unitf, known, overlapping, found, tp,
-                     tpo, fpa, fpae, fpao, fpaoe, fn, fno, fp])
-
+        rval = sp.zeros(2 * mtau + 1)
+        for tau in xrange(-mtau, mtau + 1):
+            rval[tau + mtau] = ModMetricAlignment.simi_kernel(st1, st2 + tau)
         return rval
 
-    def similarity(st1, st2, mtau):
-        """
-        Calculates the cross correlation function between two spike trains
-        """
-        sfunc = sp.zeros(2 * mtau + 1)
-        for tau in xrange(-mtau, mtau + 1):
-            sfunc[tau + mtau] = simi(st1, st2 + tau)
-        return sfunc
-
-    def simi(s1, s2):
-        """
-        Calculates the normalized scalar product between two binary vectors
+    @staticmethod
+    def simi_kernel(s1, s2):
+        """Calculates the normalized scalar product between two binary vectors
         which are given by two point processes without actually creating the
         binary vectors.
         """
+
         p = 0
         s1idx = 0
         s2idx = 0
@@ -543,38 +434,34 @@ class ModMetricAlignmentPlot(BaseModule):
 
         return 2.0 * p / (s1.shape[0] + s2.shape[0])
 
-    def overlaps(G, window):
-        """
-        Calculates a "boolean" dictonary, indicating for every spike in every
-        spiketrain in G whether it belongs to an overlap or not
-        """
-        n = len(G)
+    @staticmethod
+    def overlaps(sts, window):
+        """Calculates a "boolean" dictonary, indicating for every spike in
+        every spiketrain in sts whether it belongs to an overlap or not"""
+        n = len(sts)
         O = {}
-        for k in G.keys():
-            O[k] = sp.zeros(G[k].shape, dtype=sp.bool_)
-        Onums = sp.zeros(len(G))
+        for k in sts.keys():
+            O[k] = sp.zeros(sts[k].shape, dtype=sp.bool_)
+        Onums = sp.zeros(len(sts))
         # run over all pairs of spike trains in G
         for i in xrange(n):
             for j in xrange(i + 1, n):
                 # for every pair run over all spikes in i and check whether a
-                # spike
-                # in j overlaps
-                trainI = G[G.keys()[i]]
-                trainJ = G[G.keys()[j]]
+                # spike in j overlaps
+                trainI = sts[sts.keys()[i]]
+                trainJ = sts[sts.keys()[j]]
                 idxI = 0
                 idxJ = 0
                 while idxI < len(trainI) and idxJ < len(trainJ):
                     # Overlapping?
                     if abs(trainI[idxI] - trainJ[idxJ]) < window:
                         # Every spike can only be in one or no overlap.
-                        # prevents
-                        # triple
-                        # counting
-                        if O[G.keys()[i]][idxI] == 0:
-                            O[G.keys()[i]][idxI] = 1
+                        # prevents triple counting
+                        if O[sts.keys()[i]][idxI] == 0:
+                            O[sts.keys()[i]][idxI] = 1
                             Onums[i] += 1
-                        if O[G.keys()[j]][idxJ] == 0:
-                            O[G.keys()[j]][idxJ] = 1
+                        if O[sts.keys()[j]][idxJ] == 0:
+                            O[sts.keys()[j]][idxJ] = 1
                             Onums[j] += 1
 
                     if trainI[idxI] < trainJ[idxJ]:
@@ -584,110 +471,7 @@ class ModMetricAlignmentPlot(BaseModule):
         ret = {'O':O, 'Onums':Onums}
         return ret
 
-    # -------------------------------------------------------------------
-    # Merges 2 dictonaries of spike trains and updates the corresponding
-    # alignment
-    #def merge_spiketrains(G, E, alignment = None):
-    #    rval = {}
-    #    for i in xrange(G.keys.shape[0]):
-    #        rval[G.keys[i]+100] = G[G.keys[i]]
-    #    for i in xrange(E.keys.shape[0]):
-    #        rval[E.keys[i]+200] = E[E.keys[i]]
-    #
-    #    if alignment is not None:
-
-    HSTRS = ['GT ID', 'FU ID', 'KS', 'OS', 'FS', 'TP', 'TPO', 'FPAE', 'FPAO',
-             'FPAOE', 'FN', 'FNO', 'FP']
-
-    def nice_table_from_analysis(ana, space=6):
-        """yields a nicely readable string that contains the information about
-        the performance of that sorting"""
-
-        rval = HSTRS[0].center(space) + ' - ' + HSTRS[1].center(space) + ' | '
-        form = '%{}s - %{}s | '.format(space, space)
-        for item in HSTRS[2:]:
-            rval += item.center(6) + ' '
-            form += '%{}d '.format(space)
-        rval += '\n'
-        form += '\n'
-        for i in xrange(1, len(ana['table'])):
-            rval += form % tuple(ana['table'][i][0:14])
-        return rval
-
-    def csv_from_analysis(ana, header=True, space=6):
-        """yields a string that can be stored as a .csv file"""
-
-        rval = ''
-        if header:
-            rval += ''.join(
-                map(str.center, HSTRS, len(HSTRS) * [space])) + '\n'
-        form = ', '.join(
-            ['%{}s'.format(space)] * 2 + ['%{}d'] * (len(HSTRS)) - 2)
-        form += '\n'
-        for i in xrange(1, len(ana['table'])):
-            rval += form % tuple(ana['table'][i][0:14])
-        return rval
-
-    def print_nice_table(ret):
-        print nice_table_from_analysis(ret)
-
 ##--- MAIN
 
 if __name__ == '__main__':
-    G = {'0':sp.array([1, 100, 200, 301, 400]),
-         1:sp.array([50, 150, 250, 303, 350])}
-
-    E = {0:sp.array([1, 100, 200, 305, 307]),
-         1:sp.array([50, 150, 250, 590, 550, 648, 720])}
-
-    ret = align_spike_trains(G, E, max_shift=2, max_jitter=12)
-    from plot import P, spike_trains
-
-    fig = P.figure(facecolor='white')
-    spike_trains(G, spiketrains2=E, alignment=ret['alignment'],
-                 label1=ret['GL'], label2=ret['EL'], plot_handle=fig,
-                 samples_per_second=16000)
-    print 'Done Plot 0.'
-    print ret['alignment']
-
-#    G = {}
-#    G['0'] = sp.array([40, 80, 90, 170, 400])
-#    G[1] = sp.array([42, 150, 180, 190, 350])
-#    G[2] = sp.array([39, 80, 150, 405])
-#
-#    E = {}
-#    E[0] = sp.array([42, 80, 170, 401])
-#    E[1] = sp.array([40, 90, 150, 180, 190, 250, 348, 420])
-#
-#    #ret = align_spike_trains(G, E, maxshift=2, maxjitter=2)
-#    # print ret
-#    import common.plot as plot
-#
-#    #print 'lala 1'
-#    #plot.spike_trains(G, spiketrains2=E, alignment=ret['alignment'], show=0)
-#
-#    print 'Done Plot 1.'
-#
-#    G = {}
-#    G['0'] = sp.array([40, 80, 90, 170, 400])
-#    G[1] = sp.array([42, 150, 180, 190, 350])
-#    G[2] = sp.array([39, 80, 150, 405])
-#
-#    E = {}
-#    E[3] = sp.array([42, 80, 170, 401])
-#    E['Multi Unit 1'] = sp.array([40, 90, 150, 180, 190, 250, 348, 420])
-#    E[4] = sp.array([37, 79, 96, 149, 201, 405])
-#    E['Multi Unit 2'] = sp.array([10, 20, 30, 40, 50, 60, 60, 170])
-#
-#    ret = align_spike_trains(G, E, maxshift=2, maxjitter=2,
-#                             maxoverlapdistance=5)
-#    print ret
-#
-#    from plot import plt, spiketrains
-#
-#    fig = plt.figure(facecolor='white')
-#    spike_trains(G, spiketrains2=E, alignment=ret['alignment'],
-#                 label1=ret['GL'], label2=ret['EL'], plot_handle=fig,
-#                 samples_per_second=16000)
-#    print 'Done Plot 2.'
-#
+    pass

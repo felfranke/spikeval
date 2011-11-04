@@ -22,7 +22,7 @@ import sys
 import scipy as sp
 from spikeval.module.base_module import *
 from spikeval.module.result_types import *
-from spikeval.module.mod_plot_data import ModDataPlot
+from spikeval.module import ModDataPlot, ModMetricAlignment
 
 
 ##---TESTS
@@ -42,7 +42,7 @@ class TestModule(unittest.TestCase):
                        1:sp.array(range(20, 1000, 100)) + shift,
                        3:sp.array([222, 444, 666, 888]) + shift}
 
-    def test_general_plots(self):
+    def test_mod_data_plots(self):
         """test for scipy"""
 
         mod = ModDataPlot(
@@ -51,7 +51,17 @@ class TestModule(unittest.TestCase):
             self.sts_ev,
             sys.stdout)
         mod.apply()
-        mod.result[0].value.show()
+        self.assertEqual(mod.status, 'finalised')
+
+    def test_metric_alignment(self):
+        """test for scipy"""
+
+        mod = ModMetricAlignment(
+            self.raw_data,
+            self.sts_gt,
+            self.sts_ev,
+            sys.stdout)
+        mod.apply()
         self.assertEqual(mod.status, 'finalised')
 
 if __name__ == '__main__':

@@ -100,7 +100,7 @@ class BaseModule(object):
         :return: valid raw data
         """
 
-        self._check_raw_data(raw_data)
+        return self._check_raw_data(raw_data)
 
     def _check_raw_data(self, raw_data):
         return None
@@ -114,7 +114,7 @@ class BaseModule(object):
         :return: valid ground truth spike train set
         """
 
-        self._check_sts_gt(sts_gt)
+        return self._check_sts_gt(sts_gt)
 
     def _check_sts_gt(self, sts_gt):
         return None
@@ -128,7 +128,7 @@ class BaseModule(object):
         :return: valid evaluation spike train set
         """
 
-        self._check_sts_ev(sts_ev)
+        return self._check_sts_ev(sts_ev)
 
     def _check_sts_ev(self, sts_ev):
         return None
@@ -161,6 +161,9 @@ class BaseModule(object):
                     raise ModuleExecutionError(
                         'Error during result conversion\n%s' % str(ex))
         self._stage = 3
+
+    def _apply(self):
+        raise NotImplementedError
 
 ##---MAIN
 
