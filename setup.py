@@ -15,17 +15,20 @@ from setuptools import setup, find_packages
 def find_version():
     """read version from __init__"""
     rval = '-1'
-    f = open('./spikeval/__init__.py', 'r')
     try:
-        for line in f:
-            if line.startswith('__version__'):
-                rval = line.split()[-1][1:-1]
-                break
-    finally:
-        f.close()
-        return rval
+        f = open('./spikeval/__init__.py', 'r')
+        try:
+            for line in f:
+                if line.startswith('__version__'):
+                    rval = line.split()[-1][1:-1]
+                    break
+        finally:
+            f.close()
+    except:
+        rval = '-1'
+    return rval
 
-DESC_TITLE = "SpikEval : systematic evaluation of spike sorting"
+DESC_TITLE = "SpikEval : systematic evaluation of spike sorting results"
 DESC_LONG = ''.join([DESC_TITLE, '\n\n', open('README', 'r').read()])
 VERSION = find_version()
 
@@ -52,7 +55,7 @@ if __name__ == "__main__":
           maintainer_email="pmeier82@googlemail.com",
           description=DESC_TITLE,
           long_description=DESC_LONG,
-          license="EUPL v1.1",
+          license="MIT License",
           url='http://ni.tu-berlin.de',
           classifiers=[
               'Development Status :: 4 - Beta',
