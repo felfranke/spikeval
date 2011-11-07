@@ -25,47 +25,37 @@ class TestImports(unittest.TestCase):
     """test case for package imports"""
 
     def test_scipy(self):
-        """test for scipy"""
-
         import scipy
 
         self.assertGreaterEqual(scipy.__version__, '0.6')
 
-    def test_tables(self):
-        """test for tables"""
+    def test_mdp(self):
+        import mdp
 
-        import tables
-
-        self.assertGreaterEqual(tables.__version__, '2.0')
+        self.assertGreaterEqual(mdp.__version__, '2.3')
 
     def test_matplotlib(self):
-        """test for matplotlib"""
-
         import matplotlib
 
         self.assertGreaterEqual(matplotlib.__version__, '0.98')
         self.assertEqual(matplotlib.validate_backend('agg'), 'agg')
 
-    def test_texttable(self):
-        """test for texttable"""
-
-        import texttable
-
-        self.assertGreaterEqual(texttable.__version__, '0.8')
-
     def test_pil_image(self):
-        """test for PIL Image"""
-
         import Image
 
         self.assertGreaterEqual(Image.VERSION, '1.1.6')
 
-    def test_mdp(self):
-        """test for modular toolkit for data processing"""
+    def test_tables(self):
+        import tables
 
-        import mdp
+        self.assertGreaterEqual(tables.__version__, '2.0')
 
-        self.assertGreaterEqual(mdp.__version__, '2.5')
+    def test_texttable(self):
+        import texttable
+
+        self.assertGreaterEqual(texttable.__version__, '0.8')
+
+##---MAIN
 
 if __name__ == '__main__':
     unittest.main()

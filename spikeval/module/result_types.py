@@ -8,8 +8,8 @@
 
 """result types for module results"""
 __docformat__ = 'restructuredtext'
-__all__ = ['ResultError', 'ModuleResult', 'MRScalar', 'MRTable', 'MRDict',
-           'MRPlot']
+__all__ = ['ResultError', 'ModuleResult', 'MRString', 'MRScalar', 'MRTable',
+           'MRDict', 'MRPlot']
 
 
 ##---IMPORTS
@@ -75,12 +75,17 @@ class MRScalar(ModuleResult):
     def __init__(self, value):
         """
         :type value: scalar dtype
-        :param value: single digit _value
+        :param value: single digit value
         """
 
-        if not sp.isscalar(value):
+        value_ = value
+        if sp.isscalar(value_):
+            value_ = sp.asanyarray(value_)
+        try:
+            assert value_.ndim == 0
+        except:
             raise ValueError('%s is not a scalar!' % value)
-        self._value = sp.asscalar(value)
+        self._value = value_
 
 
 class MRTable(ModuleResult):

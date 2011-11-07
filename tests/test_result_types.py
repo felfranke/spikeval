@@ -19,46 +19,88 @@ except ImportError:
     import unittest
 
 import scipy as sp
+import Image
+import spikeplot
+from spikeval.module.result_types import *
 
 
 ##---TESTS
 
-class TestBaseModule(unittest.TestCase):
+class TestResultTypes(unittest.TestCase):
     """test case for package imports"""
 
-    def setUp(self):
-        """setup input data"""
+    def test_mr_string(self):
+        data = 'teststr'
+        data_res = MRString(data)
+        self.assertEqual(data_res.value, data)
+        self.assertEqual(data_res.__str__(), 'MRString{%s}' % data)
+        self.assertIsInstance(data_res.value, str)
 
-        self.raw_data = sp.randn(1000, 4)
-        self.sts_gt = {0:sp.array(range(100, 1000, 100)),
-                       1:sp.array(range(20, 1000, 100)),
-                       3:sp.array([222, 444, 666, 888])}
-        shift = 20
-        self.sts_ev = {0:sp.array(range(100, 1000, 100)) + shift,
-                       1:sp.array(range(20, 1000, 100)) + shift,
-                       3:sp.array([222, 444, 666, 888]) + shift}
+    def test_mr_scalar(self):
+        data = 666.666
+        data_res = MRScalar(data)
+        self.assertEqual(data_res.value, data)
+        self.assertEqual(data_res.__str__(), 'MRScalar{%s}' % data)
+        self.assertIsInstance(data_res.value, sp.ndarray)
 
-    def test_module(self):
-        """test for scipy"""
+    def test_mr_table(self):
+        data = sp.arange(16).reshape(4, 4)
+        data_res = MRTable(data)
+        data_res_str = """MRTable{
++----+----+----+----+
+| 0  | 1  | 2  | 3  |
++----+----+----+----+
+| 4  | 5  | 6  | 7  |
++----+----+----+----+
+| 8  | 9  | 10 | 11 |
++----+----+----+----+
+| 12 | 13 | 14 | 15 |
++----+----+----+----+
+}"""
+        self.assertTrue(sp.allclose(data_res.value, data))
+        self.assertEqual(data_res.__str__(), data_res_str)
+        self.assertIsInstance(data_res.value, sp.ndarray)
 
-        import scipy
+    def test_mr_dict(self):
+        data = dict(zip(range(5), range(5)))
+        data_res = MRDict(data)
+        data_res_str = """MRDict{
++-----+-------+
+| Key | Value |
++=====+=======+
+| 0   | 0     |
++-----+-------+
+| 1   | 1     |
++-----+-------+
+| 2   | 2     |
++-----+-------+
+| 3   | 3     |
++-----+-------+
+| 4   | 4     |
++-----+-------+
+}"""
+        self.assertEqual(data_res.value, data)
+        self.assertEqual(data_res.__str__(), data_res_str)
+        self.assertIsInstance(data_res.value, dict)
 
-        self.assertGreaterEqual(scipy.__version__, '0.7.0')
+    def test_mr_plot(self):
+        data1 = sp.array([sp.eye(10), sp.eye(10), sp.eye(10)]).T
+        data1_res = MRPlot(data1)
+        data2 = Image.frombuffer('RGB', data1.shape[:2], data1, 'raw',
+                                 'RGB', 0, 1)
+        data2_res = MRPlot(data2)
+        data3 = spikeplot.plt.imshow(sp.eye(10)).get_figure()
+        data3_res = MRPlot(data3)
 
-    def test_tables(self):
-        """test for tables"""
+        self.assertEqual(data1_res.__str__(), 'MRPlot{Image(10, 10)}')
+        self.assertEqual(data2_res.__str__(), 'MRPlot{Image(10, 10)}')
+        self.assertEqual(data3_res.__str__(), 'MRPlot{Image(640, 480)}')
 
-        import tables
+        self.assertIsInstance(data1_res.value, Image.Image)
+        self.assertIsInstance(data2_res.value, Image.Image)
+        self.assertIsInstance(data3_res.value, Image.Image)
 
-        self.assertGreaterEqual(tables.__version__, '2.1.2')
-
-    def test_matplotlib(self):
-        """test for matplotlib"""
-
-        import matplotlib
-
-        self.assertGreaterEqual(matplotlib.__version__, '0.99.3')
-        self.assertEqual(matplotlib.validate_backend('agg'), 'agg')
+##---MAIN
 
 if __name__ == '__main__':
     unittest.main()

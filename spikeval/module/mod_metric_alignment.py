@@ -97,6 +97,7 @@ class ModMetricAlignment(BaseModule):
     # module interface
 
     RESULT_TYPES = [
+        MRTable, # res_table
         MRTable, # similarity_matrix
         MRTable, # shift_matrix
         MRTable, # sp.atleast_2d(delta_shift)
@@ -367,8 +368,78 @@ class ModMetricAlignment(BaseModule):
                     EL[k2][spk] = 3 # FP
                     FP[j] += 1
 
+        res_table_headers = [
+            'GT Unit ID', # ID of gt unit
+            'Found Unit ID', # ID of associated ev unit
+            'Known Spikes', # nos of gt unit
+            'Overlapping Spikes', # nos of overlaps
+            'Found Spikes', # nos of associated ev unit
+            'True Pos', # nos which are assigned to the associated gt unit.
+            'True Pos Ovps', # nos of overlaps
+            'False Pos Assign GT', # nos of ev unit which are assigned to
+            # to a non-associated gt unit
+            'False Pos Assign Found', #
+            'False Pos Ovps GT', # FPAO
+            'FPs Assign Ovps Found', # FPAO_E
+            'False Neg', #
+            'False Neg Overlaps', #
+            'False Pos', #
+        ]
+        res_table = []
+
+        # build a table with one row for every assignment of two spike trains
+        # and one row for every unassigned spike train.
+        # Problem: The number of false positive assignments for one of the
+        # assignment rows has to be the sum of the individual assignment
+        # errors ???? ->This way an assignment error counts as 2 errors
+        # (one FP and one FN).
+
+        remaining_found_units = sp.ones(m)
+        # build the assignment rows and unassigned ground truth spike train
+        # rows first
+        for i in xrange(n):
+            unitk = self.sts_gt.keys()[i]
+            known = num_known[i]
+            overlapping = NO[i]
+            tp = TP[i]
+            tpo = TPO[i]
+            fn = FN[i]
+            fno = FNO[i]
+            fpa = FPA[i]
+            fpao = FPAO[i]
+
+            j = u_k2f[i]
+            unitf = ''
+            found = fp = fpae = fpaoe = 0
+            if j >= 0:
+                remaining_found_units[j] = 0
+                unitf = self.sts_ev.keys()[j]
+                found = num_found[j]
+                fp = FP[j]
+                fpae = FPA_E[j]
+                fpaoe = FPAO_E[j]
+
+            res_table.append([unitk, unitf, known, overlapping, found, tp,
+                              tpo, fpa, fpae, fpao, fpaoe, fn, fno, fp])
+
+        # Append "False Positive Unit" which has all found spikes of found
+        # units which
+        # were not assigned to a ground truth unit
+        for j in xrange(m):
+            if remaining_found_units[j] == 1:
+                unitk = ''
+                known = overlapping = tp = tpo = fn = fno = fpa = fpao = 0
+                unitf = self.sts_ev.keys()[j]
+                found = num_found[j]
+                fp = FP[j]
+                fpae = FPA_E[j]
+                fpaoe = FPAO_E[j]
+                res_table.append([unitk, unitf, known, overlapping, found, tp,
+                                  tpo, fpa, fpae, fpao, fpaoe, fn, fno, fp])
+
         # Build return _value dictionary
         self.result = [
+            MRTable(res_table, header=res_table_headers), # table
             similarity_matrix, # table
             shift_matrix, # table
             sp.atleast_2d(delta_shift), # table

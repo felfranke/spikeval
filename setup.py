@@ -14,7 +14,7 @@ from setuptools import setup, find_packages
 
 def find_version():
     """read version from __init__"""
-    rval = '-1'
+    rval = '0'
     try:
         f = open('./spikeval/__init__.py', 'r')
         try:
@@ -25,7 +25,7 @@ def find_version():
         finally:
             f.close()
     except:
-        rval = '-1'
+        rval = '0'
     return rval
 
 DESC_TITLE = "SpikEval : systematic evaluation of spike sorting results"

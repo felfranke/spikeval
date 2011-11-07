@@ -41,8 +41,6 @@ class TestModule(unittest.TestCase):
                        3:sp.array([222, 444, 666, 888]) + shift}
 
     def test_mod_data_plots(self):
-        """test for scipy"""
-
         mod = ModDataPlot(
             self.raw_data,
             self.sts_gt,
@@ -52,8 +50,6 @@ class TestModule(unittest.TestCase):
         self.assertEqual(mod.status, 'finalised')
 
     def test_metric_alignment(self):
-        """test for scipy"""
-
         mod = ModMetricAlignment(
             self.raw_data,
             self.sts_gt,
@@ -61,6 +57,8 @@ class TestModule(unittest.TestCase):
             sys.stdout)
         mod.apply()
         self.assertEqual(mod.status, 'finalised')
+
+##---MAIN
 
 if __name__ == '__main__':
     unittest.main()

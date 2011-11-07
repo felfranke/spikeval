@@ -16,10 +16,92 @@ __all__ = ['check_record', 'start_eval']
 import sys
 from .core import eval_core
 from .datafiles import read_gdf_sts, read_hdf5_arc
-from .somewhere import Record, EvaluationResults
 from .logging import Logger
 from .module import MODULES
 
+
+##---DUMMY CLASSES FOR DJANGO ORM
+# i could not have the code run any tests as i dont know how to properly
+# import the django model classes. so i implemented these dummies here,
+# I hope all the relevant information is still in the dummies and my concept
+# of the behavior is right. please comment on this or rewrite on your own
+# and send me a patch of this file.
+
+class FileThingy(object):
+    path = '/dev/null'
+
+
+class DjangoORMField(object):
+    def __init__(self, type=''):
+        self.type = ''
+
+
+class Record(object):
+    """dummy for the benchmark file record"""
+
+    def __init__(self, id=0):
+        self.id = id
+        self.verified = False
+        self.verified_error = ''
+
+        self.groundtruth = FileThingy()
+        self.rawdatafile = FileThingy()
+
+    def save(self):
+        pass
+
+
+class EvaluationResultsImg(object):
+    """dummy for the evaluation results of pictures"""
+
+    evaluation = DjangoORMField('eval_fk')
+    gt_unit = DjangoORMField('str')
+    found_unit = DjangoORMField('str')
+    img_data = DjangoORMField('image')
+    img_type = DjangoORMField('str') # or mapping
+
+    def __init__(self, id=0):
+        self.id = id
+        self.error = False
+        self.error_log = ''
+
+    def save(self):
+        pass
+
+
+class EvaluationResultsStats(object):
+    """dummy for the evaluation results of statics"""
+
+    evaluation = DjangoORMField('eval_fk')
+    date_created = DjangoORMField('date')
+
+    gt_unit = DjangoORMField('str') #0
+    found_unit = DjangoORMField('str') #1
+
+    KS = DjangoORMField('int') #2
+    KSO = DjangoORMField('int') #3
+    FS = DjangoORMField('int') #4
+
+    TP = DjangoORMField('int') #5
+    TPO = DjangoORMField('int') #6
+
+    FPA = DjangoORMField('int') #7
+    FPAE = DjangoORMField('int') #8
+    FPAO = DjangoORMField('int') #9
+    FPAOE = DjangoORMField('int') #10
+
+    FN = DjangoORMField('int') #11
+    FNO = DjangoORMField('int') #12
+
+    FP = DjangoORMField('int') #13
+
+    def __init__(self, id=0):
+        self.id = id
+        self.error = False
+        self.error_log = ''
+
+    def save(self):
+        pass
 
 ##---FUNCTIONS
 
@@ -52,9 +134,9 @@ def check_record(key, log=sys.stdout):
 
     :type key: int
     :param key: unique record identifier
-    :type log: func
-    :param log: logging function func(level, text), the default prints to fd1
-        Default=dummy_log
+    :type log: file_like
+    :param log: logging stream
+        Default=sys.stdout
 
     :returns: bool -- True if benchmark files comply, False else. Errors will
         be written to the comment section of the orm layer object referenced
@@ -126,32 +208,28 @@ def check_record(key, log=sys.stdout):
 #res.log = "bla"
 #res.image = Image
 #...
-def start_eval(path_rd, path_ev, path_gt, key, temp_dir='/tmp',
-               log=sys.stdout, **kwargs):
+def start_eval(path_rd, path_ev, path_gt, key, log=sys.stdout, **kwargs):
     """core function to produce one evaluation result based on one set of
     data, ground truth spike train and estimated spike train.
 
+    :type path_rd: str
+    :param path_rd: path to the file holding the raw data
     :type path_ev: str
     :param path_ev: path to the file holding the estimated spike train
     :type path_gt: str
     :param path_gt: path to the file holding the ground truth spike train
-    :type path_rd: str
-    :type path_rd: path to the file holding the raw data
     :type key: int
     :param key: unique evaluation key
-    :type temp_dir: str
-    :param temp_dir: path to a directory where temporary files may be stored
-    :type log: func
-    :param log: logging function func(level, text), the default prints to fd1
-        Default=dummy_log
-    :keyword ??: any, will be passed to modules
+    :type log: file_like
+    :param log: logging stream
+        Default=sys.stdout
+    :keyword ??: any, will be passed to modules as parameters
 
     :returns: None
     """
 
     # inits
     logger = Logger.get_logger(log)
-    rval = EvaluationResults(id=key)
 
     # read in evaluation file
     logger.log('reading input files')
@@ -177,8 +255,45 @@ def start_eval(path_rd, path_ev, path_gt, key, temp_dir='/tmp',
             modules.append(this_mod)
     logger.log('done evaluating')
 
-    # dont care for result handling here
-    return modules
+    logger.log('starting to save evaluation results')
+    # care for static result mapping of images,
+    # we will send PIL Image instances here!
+    for i, t in enumerate(['wf_single', 'wf_all', 'clus12', 'clus34',
+                           'clus_proj', 'spiketrain']):
+        rval = EvaluationResultsImg(id=key)
+        rval.img_data = modules[0][i].value
+        rval.img_type = t
+        rval.save()
+
+    # care for static result mapping of alignment statistic,
+    # we will send a MRTable instance here
+    for row in modules[1][0].value:
+        rval = EvaluationResultsStats(id=key)
+
+        rval.gt_unit = row[0]
+        rval.found_unit = row[1]
+
+        rval.KS = row[2]
+        rval.KSO = row[3]
+        rval.FS = row[4]
+
+        rval.TP = row[5]
+        rval.TPO = row[6]
+
+        rval.FPA = row[7]
+        rval.FPAE = row[8]
+        rval.FPAO = row[9]
+        rval.FPAOE = row[10]
+
+        rval.FN = row[11]
+        rval.FNO = row[12]
+
+        rval.FP = row[13]
+
+        rval.save()
+    logger.log('done saving results')
+
+#    return modules
 
 ##---MAIN
 

@@ -36,8 +36,6 @@ class TestLogging(unittest.TestCase):
         self.assertFalse(Logger.is_file_like(self))
 
     def test_logger_file(self):
-        """creating a logger for file"""
-
         fname = os.path.join(os.path.dirname(__file__), 'test_logger.txt')
         if os.path.exists(fname):
             os.remove(fname)
@@ -48,11 +46,8 @@ class TestLogging(unittest.TestCase):
         os.remove(fname)
 
     def test_logger_strio(self):
-        """creating a logger for StringIO"""
-
         canvas = StringIO()
         logger = Logger.get_logger(canvas)
-        test_str = ['test1', 'test2', 'test3']
         logger.log(*self.str_test)
         self.assertEqual(logger.get_content().split(), self.str_test)
 
@@ -60,6 +55,8 @@ class TestLogging(unittest.TestCase):
         L = Logger(StringIO())
         L.log_delimiter_line()
         self.assertEqual(L.get_content().strip(), '*' * 20)
+
+##---MAIN
 
 if __name__ == '__main__':
     unittest.main()

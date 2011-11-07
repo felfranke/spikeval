@@ -17,18 +17,25 @@ try:
     import unittest2 as unittest
 except ImportError:
     import unittest
+import os
+from spikeval.datafiles import *
+from spikeval.django_entry_point import *
 
 
 ##---TESTS
 
-class TestLogging(unittest.TestCase):
-    """test case for logging"""
+class TestDjangoEntryPoint(unittest.TestCase):
+    """test case django_entry_point.py"""
 
-    def setUp(self):
-        self.str_test = ['test1', 'test2', 'test3']
+    # XXX: not sure what to test exactly, have no means of testing anyways :(
 
-    def test_xxx(self):
-        pass
+    def test_start_eval(self):
+        gt, sr = read_hdf5_arc(os.path.join('..', 'resource',
+                                            'bmark_test.h5'))
+        sts = read_gdf_sts(os.path.join('..', 'resource', 'bmark_test.gdf'))
+        start_eval()
+
+##---MAIN
 
 if __name__ == '__main__':
     unittest.main()

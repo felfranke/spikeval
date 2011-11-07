@@ -10,14 +10,14 @@ from __future__ import with_statement
 
 """reading spike trains from GDF and raw data from HDF5"""
 __docformat__ = 'restructuredtext'
-__all__ = ['read_gdf_sts', 'read_hdf5_arc', 'create_hdf5_arc']
+__all__ = ['read_gdf_sts', 'read_hdf5_arc', 'create_hdf5_arc', 'create_gdf']
 
 
 ##---IMPORTS
 
 import scipy as sp
 from tables import openFile
-from util import dict_list2arr
+from util import dict_arrsort, dict_list2arr, sortrows
 
 
 ##---FUNCTIONS
@@ -40,7 +40,7 @@ def read_gdf_sts(file_name):
             if data[0] not in rval:
                 rval[data[0]] = []
             rval[data[0]].append(int(data[1]))
-    return dict_list2arr(rval)
+    return dict_arrsort(dict_list2arr(rval))
 
 
 def read_hdf5_arc(file_name):
@@ -74,10 +74,10 @@ def read_hdf5_arc(file_name):
 
 
 def create_hdf5_arc(file_name, rdata, srate=1000.0, **kwargs):
-    """creates a valid hd5 archive for raw data storage
+    """creates a valid hdf5 archive for :rdata:
 
     :type file_name: str
-    :param file_name: path to the file to read
+    :param file_name: path to the file to write
     :type rdata: ndarray
     :param rdata: raw data array [samples, channels] castable to f32
     :type srate: float
@@ -99,6 +99,34 @@ def create_hdf5_arc(file_name, rdata, srate=1000.0, **kwargs):
                 arc.createArray(arc.root, str(k), v)
             return True
         except:
+            return False
+
+
+def create_gdf(file_name, sts):
+    """creates a valid gdf file for :sts:
+
+    :type file_name: str
+    :param file_name: path to the file to write
+    :type sts: dict
+    :param sts: spike train set
+
+    :returns: True on success, False else
+    """
+
+    with open(file_name, 'w') as gdf:
+        try:
+            gdf_items = []
+            for k, st in sts.items():
+                for spk in st:
+                    gdf_items.append([spk, k])
+            gdf_items = sortrows(gdf_items)
+            gdf_lines = []
+            for item in gdf_items:
+                gdf_lines.append('%s\t%d' % (item[1], item[0]))
+            gdf.writelines(gdf_lines)
+            return True
+        except Exception, ex:
+            print str(ex)
             return False
 
 ##---MAIN

@@ -9,7 +9,7 @@
 """general utility/tools for dictionary and array handling"""
 __docformat__ = 'restructuredtext'
 __all__ = ['dict_list2arr', 'dict_arrsort', 'extract_spikes', 'jitter_st',
-           'jitter_sts', 'matrix_argmax', 'matrix_argmin']
+           'jitter_sts', 'matrix_argmax', 'matrix_argmin', 'sortrows']
 
 
 ##---IMPORTS
@@ -155,6 +155,20 @@ def matrix_argmin(M):
     j = int(idx % M.shape[1])
     i = int(sp.floor(idx / M.shape[1]))
     return i, j
+
+
+def sortrows(data):
+    """sort matrix by rows
+
+    :type data: ndarray
+    :param data: the ndarray that should be sorted by its rows
+    :returns: ndarray : data sorted by its rows.
+    """
+
+    return sp.sort(
+        data.view([('', data.dtype)] * data.shape[1]),
+        axis=0
+    ).view(data.dtype)
 
 ##---MAIN
 
