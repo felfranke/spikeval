@@ -38,13 +38,13 @@ if __name__ == "__main__":
           packages=find_packages(),
           include_package_data=True,
           install_requires=[
-              'scipy>=0.6.0',
               'matplotlib',
+              'mdp',
+              'PIL>=1.1.6',
+              'scipy>=0.6.0',
               'spikeplot>=0.1.0',
               'tables>=2.0',
               'texttable>=0.8',
-              'PIL>=1.1.6',
-              'mdp>=2.5',
               ],
           requires=[],
 
