@@ -16,7 +16,7 @@ __all__ = ['ModDataPlot']
 import scipy as sp
 from scipy.linalg import cholesky_banded
 import spikeplot
-from mdp.nodes import PCANode
+from mdp import pca
 from .base_module import BaseModule, ModuleInputError, ModuleExecutionError
 from .result_types import MRPlot
 from ..util import extract_spikes, dict_arrsort, dict_list2arr
@@ -138,10 +138,8 @@ class ModDataPlot(BaseModule):
 
         # prepare data
         tf = sum(self.parameters['cut'])
-        nc = self.raw_data
-        pca = PCANode(output_dim=4)
         # TODO: prewhiten
-        data_stacked = pca(sp.vstack(spikes.values()))
+        data_stacked = pca(sp.vstack(spikes.values()), output_dim=4)
         data = {}
         idx = 0
         for k, v in spikes.items():

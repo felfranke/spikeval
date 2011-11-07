@@ -262,39 +262,43 @@ def start_eval(path_rd, path_ev, path_gt, key, log=sys.stdout, **kwargs):
     logger.log('starting to save evaluation results')
     # care for static result mapping of images,
     # we will send PIL Image instances here!
-    for i, t in enumerate(['wf_single', 'wf_all', 'clus12', 'clus34',
-                           'clus_proj', 'spiketrain']):
-        rval = EvaluationResultsImg(id=key)
-        rval.img_data = modules[0].result[i].value
-        rval.img_type = t
-        rval.save()
+    if modules[0].status == 'finalised':
+        for i, t in enumerate(['wf_single', 'wf_all', 'clus12', 'clus34',
+                               'clus_proj', 'spiketrain']):
+            rval = EvaluationResultsImg(id=key)
+            rval.img_data = modules[0].result[i].value
+            rval.img_type = t
+            rval.save()
+    else:
+        logger.log('problem with ModDataPlot: not finalised!')
 
     # care for static result mapping of alignment statistic,
     # we will send a MRTable instance here
-    for row in modules[1].result[0].value:
-        rval = EvaluationResultsStats(id=key)
+    if modules[1].status == 'finalised':
+        for row in modules[1].result[0].value:
+            rval = EvaluationResultsStats(id=key)
 
-        rval.gt_unit = row[0]
-        rval.found_unit = row[1]
+            rval.gt_unit = row[0]
+            rval.found_unit = row[1]
 
-        rval.KS = row[2]
-        rval.KSO = row[3]
-        rval.FS = row[4]
+            rval.KS = row[2]
+            rval.KSO = row[3]
+            rval.FS = row[4]
 
-        rval.TP = row[5]
-        rval.TPO = row[6]
+            rval.TP = row[5]
+            rval.TPO = row[6]
 
-        rval.FPA = row[7]
-        rval.FPAE = row[8]
-        rval.FPAO = row[9]
-        rval.FPAOE = row[10]
+            rval.FPA = row[7]
+            rval.FPAE = row[8]
+            rval.FPAO = row[9]
+            rval.FPAOE = row[10]
 
-        rval.FN = row[11]
-        rval.FNO = row[12]
+            rval.FN = row[11]
+            rval.FNO = row[12]
 
-        rval.FP = row[13]
+            rval.FP = row[13]
 
-        rval.save()
+            rval.save()
     logger.log('done saving results')
 
 #    return modules
