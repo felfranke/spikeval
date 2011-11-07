@@ -18,7 +18,6 @@ try:
 except ImportError:
     import unittest
 import os
-from spikeval.datafiles import *
 from spikeval.django_entry_point import *
 
 
@@ -30,10 +29,10 @@ class TestDjangoEntryPoint(unittest.TestCase):
     # XXX: not sure what to test exactly, have no means of testing anyways :(
 
     def test_start_eval(self):
-        gt, sr = read_hdf5_arc(os.path.join('..', 'resource',
-                                            'bmark_test.h5'))
-        sts = read_gdf_sts(os.path.join('..', 'resource', 'bmark_test.gdf'))
-        start_eval()
+        path_rd = os.path.join('..', 'resource', 'bmark_test_rd.h5')
+        path_gt = os.path.join('..', 'resource', 'bmark_test_gt.gdf')
+        path_ev = os.path.join('..', 'resource', 'bmark_test_ev.gdf')
+        start_eval(path_rd=path_rd, path_ev=path_ev, path_gt=path_gt, key=666)
 
 ##---MAIN
 

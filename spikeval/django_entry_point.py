@@ -261,13 +261,13 @@ def start_eval(path_rd, path_ev, path_gt, key, log=sys.stdout, **kwargs):
     for i, t in enumerate(['wf_single', 'wf_all', 'clus12', 'clus34',
                            'clus_proj', 'spiketrain']):
         rval = EvaluationResultsImg(id=key)
-        rval.img_data = modules[0][i].value
+        rval.img_data = modules[0].result[i].value
         rval.img_type = t
         rval.save()
 
     # care for static result mapping of alignment statistic,
     # we will send a MRTable instance here
-    for row in modules[1][0].value:
+    for row in modules[1].result[0].value:
         rval = EvaluationResultsStats(id=key)
 
         rval.gt_unit = row[0]

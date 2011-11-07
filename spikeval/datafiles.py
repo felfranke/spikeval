@@ -116,17 +116,17 @@ def create_gdf(file_name, sts):
     with open(file_name, 'w') as gdf:
         try:
             gdf_items = []
-            for k, st in sts.items():
+            sts_keys = dict(enumerate(sts.keys()))
+            for k in xrange(len(sts)):
+                st = sts[sts_keys[k]]
                 for spk in st:
                     gdf_items.append([spk, k])
+            gdf_items = sp.asarray(gdf_items, dtype=sp.int64)
             gdf_items = sortrows(gdf_items)
-            gdf_lines = []
-            for item in gdf_items:
-                gdf_lines.append('%s\t%d' % (item[1], item[0]))
-            gdf.writelines(gdf_lines)
+            for spk, k in gdf_items:
+                gdf.write('%s\t%s\n' % (sts_keys[k], spk))
             return True
-        except Exception, ex:
-            print str(ex)
+        except:
             return False
 
 ##---MAIN
