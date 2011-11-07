@@ -14,6 +14,7 @@ __all__ = ['check_record', 'start_eval']
 ##---IMPORTS
 
 import sys
+from datetime import datetime
 from .core import eval_core
 from .datafiles import read_gdf_sts, read_hdf5_arc
 from .logging import Logger
@@ -246,7 +247,10 @@ def start_eval(path_rd, path_ev, path_gt, key, log=sys.stdout, **kwargs):
     for mod_cls in MODULES:
         try:
             logger.log('starting module: %s' % mod_cls.__name__)
+            tick = datetime.now()
             this_mod = eval_core(rd, gt, ev, mod_cls, logger, **kwargs)
+            tock = datetime.now()
+            logger.log('finished: %s' % str(tock - tick))
         except Exception, ex:
             logger.log_delimiter_line()
             logger.log(str(ex))
