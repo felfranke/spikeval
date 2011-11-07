@@ -33,13 +33,13 @@ DESC_LONG = ''.join([DESC_TITLE, '\n\n', open('README', 'r').read()])
 VERSION = find_version()
 
 if __name__ == "__main__":
-    setup(name="spikeval",
+    setup(name="SpikEval",
           version=VERSION,
           packages=find_packages(),
           include_package_data=True,
           install_requires=[
               'scipy>=0.6.0',
-              'matplotlib>=0.98',
+              'matplotlib',
               'spikeplot>=0.1.0',
               'tables>=2.0',
               'texttable>=0.8',
