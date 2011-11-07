@@ -42,10 +42,10 @@ class ModuleResult(object):
 
     def __str__(self):
         s = self._str_val().splitlines()
-        return '{0}{{{1}{2}{3}}}'.format(self.__class__.__name__,
-                                         '\n' if len(s) > 1 else '',
-                                         '\n'.join(s),
-                                         '\n' if len(s) > 1 else '')
+        return '%s{%s%s%s}' % (self.__class__.__name__,
+                               '\n' if len(s) > 1 else '',
+                               '\n'.join(s),
+                               '\n' if len(s) > 1 else '')
 
     def _str_val(self):
         return str(self._value)
