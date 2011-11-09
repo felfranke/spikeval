@@ -28,6 +28,10 @@ class TestDjangoEntryPoint(unittest.TestCase):
 
     # XXX: not sure what to test exactly, have no means of testing anyways :(
 
+    def test_check_record(self):
+        rval = check_record(666)
+        self.assertTrue(rval)
+
     def test_start_eval(self):
         path_rd = os.path.join('..', 'resource', 'bmark_test_rd.h5')
         path_gt = os.path.join('..', 'resource', 'bmark_test_gt.gdf')

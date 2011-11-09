@@ -15,6 +15,7 @@ __all__ = ['check_record', 'start_eval']
 
 import sys
 from datetime import datetime
+import scipy as sp
 from .core import eval_core
 from .datafiles import read_gdf_sts, read_hdf5_arc
 from .logging import Logger
@@ -47,6 +48,10 @@ class Record(object):
 
         self.groundtruth = FileThingy()
         self.rawdatafile = FileThingy()
+
+        if id == 666:
+            self.groundtruth.path = '../resource/bmark_test_gt.gdf'
+            self.rawdatafile.path = '../resource/bmark_test_rd.h5'
 
     def save(self):
         pass
@@ -161,19 +166,19 @@ def check_record(key, log=sys.stdout):
         gt = read_gdf_sts(gt_file_path)
         logger.log('found gt_file: %s' % gt_file_path)
         for st in gt:
-            assert isinstance(st, sp.ndarray)
-            assert st.ndim == 1
+            if not isinstance(gt[st], sp.ndarray):
+                raise TypeError('spike train %s not ndarray' % st)
+            if not gt[st].ndim == 1:
+                raise ValueError('spike trains have to be ndim==1')
         logger.log('gt_file passed all checks')
         # TODO: more checks?
 
         # checking raw data file -- should be hdf5
-        rd = read_hdf5_arc(rd_file_path)
+        rd, sr = read_hdf5_arc(rd_file_path)
         logger.log('found rd_file: %s' % rd_file_path)
-        assert 'sampling_rate' in rd
-        srate = rd['sampling_rate']
-        assert srate.ndim == 0
-        assert 'data' in rd
-        raw_data = rd['data']
+        len_rd_sec = rd.shape[0] / sr
+        logger.log('found data in %d channels, for %d sec' %
+                   (rd.shape[1], len_rd_sec))
 
         # TODO: more checks?
 
@@ -185,8 +190,8 @@ def check_record(key, log=sys.stdout):
 
     # all checks passed
     rec.save()
-    logger.log('passed record check for key=%d' % key)
-    return rec.verfied
+    logger.log('done record check for key=%d => %s' % (key, rec.verified))
+    return rec.verified
 
 #+Interface 2: The user uploads a sorting result. The frontend calls a
 #backend function and displays the state of the evaluation to the user.
