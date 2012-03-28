@@ -44,7 +44,7 @@ class BaseModule(object):
     :self._check_parameters; checks the optional parameters and should
         return a dict containing all optional parameters initialised to
         their default values or set to the passed values.
-    :self.apply: is the execution content of the module and should implement
+    :self._apply: is the execution content of the module and should implement
         the module and store any results in :self.result:.
 
     You may log any useful information using :self.logger:,
