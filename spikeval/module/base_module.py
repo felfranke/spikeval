@@ -66,7 +66,7 @@ class BaseModule(object):
         :keyword ??: any
         """
 
-        # inits and checks
+        # init and checks
         self._stage = 0
         self.logger = Logger.get_logger(log)
         self.parameters = self.check_parameters(parameters)

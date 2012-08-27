@@ -17,8 +17,7 @@ __all__ = ['ResultError', 'ModuleResult', 'MRString', 'MRScalar', 'MRTable',
 import scipy as sp
 from texttable import Texttable
 import Image
-import spikeplot
-
+from matplotlib.backends.backend_agg import Figure, FigureCanvasAgg
 
 ##---CLASSES
 
@@ -64,6 +63,8 @@ class MRString(ModuleResult):
         :param value: string value
         """
 
+        super(MRString, self).__init__()
+
         if not isinstance(value, str):
             raise ValueError('%s is not a string!' % value)
         self._value = str(value)
@@ -77,6 +78,8 @@ class MRScalar(ModuleResult):
         :type value: scalar dtype
         :param value: single digit value
         """
+
+        super(MRScalar, self).__init__()
 
         value_ = value
         if sp.isscalar(value_):
@@ -100,6 +103,8 @@ class MRTable(ModuleResult):
         :type header: list
         :param header: list of str with as many entries as columns in _value
         """
+
+        super(MRTable, self).__init__()
 
         val = sp.asanyarray(value)
         if val.dtype == object:
@@ -136,6 +141,8 @@ class MRDict(ModuleResult):
         :param init_values: list of tuples to initialise a dictionary from
         """
 
+        super(MRDict, self).__init__()
+
         self._value = dict(init_values)
 
     @property
@@ -156,17 +163,18 @@ class MRPlot(ModuleResult):
 
     def __init__(self, input_data):
         """
-        :type input_data: matplotlib.Figure or Image or ndarray
+        :type input_data: matplotlib.figure.Figure or Image or ndarray
         :param input_data: the input data to generate the :Image: instance
             from.
         """
 
-        is_mpl = isinstance(input_data, spikeplot.plt.Figure)
+        super(MRPlot, self).__init__()
+
+        is_mpl = isinstance(input_data, Figure)
         is_img = isinstance(input_data, Image.Image)
         is_nda = isinstance(input_data, sp.ndarray)
         if not (is_mpl ^ is_img ^ is_nda):
-            raise TypeError('input_data must one of mpl.Figure, Image '
-                            'or sp.ndarray')
+            raise TypeError('input_data must one of mpl.Figure, Image or sp.ndarray')
         im = None
         if is_img:
             im = input_data
@@ -201,13 +209,15 @@ class MRPlot(ModuleResult):
     def img_from_fig(fig):
         """produce :Image: instance from :fig:
 
-        :type fig: matplotlib.pyplot.Figure
-        :param fig: input :Figure: instance
-        :return: :Image: instance of the canvas of :fig:
+        :type fig: matplotlib.figure.Figure
+        :param fig: input figure
+        :rtype: Image.Image
         """
 
-        if not isinstance(fig, spikeplot.plt.Figure):
-            raise TypeError('fig must be a mpl.Figure')
+        if not isinstance(fig, Figure):
+            raise TypeError('fig must be a %s' % Figure)
+        if fig.canvas is None:
+            cvs = FigureCanvasAgg(fig)
         fig.canvas.draw()
         rgb = fig.canvas.tostring_rgb()
         rgb = sp.fromstring(rgb, dtype=sp.uint8)

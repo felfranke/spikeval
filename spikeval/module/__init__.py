@@ -10,16 +10,12 @@
 __docformat__ = 'restructuredtext'
 
 
-
 ##---IMPORTS
 
-from .base_module import BaseModule, ModuleInputError, ModuleExecutionError
-from .result_types import (ResultError, ModuleResult, MRString, MRScalar,
-                           MRTable, MRDict, MRPlot)
-
-from .mod_plot_data import ModDataPlot
-from .mod_metric_alignment import ModMetricAlignment
-
+from .base_module import *
+from .result_types import *
+from .mod_plot_data import *
+from .mod_metric_alignment import *
 
 ##---MODULES
 

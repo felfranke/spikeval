@@ -142,7 +142,7 @@ class ModMetricAlignment(BaseModule):
             'maxoverlapdistance':parameters.get('maxoverlapdistance', 45), }
 
     def _apply(self):
-        # inits and checks
+        # init and checks
         n = len(self.sts_gt)
         m = len(self.sts_ev)
         max_shift = self.parameters['maxshift']
