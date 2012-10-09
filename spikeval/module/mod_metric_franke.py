@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# spikeval - module.mod_metric_alignment.py
+# spikeval - module.mod_metric_franke.py
 #
 # Felix Franke <felfranke@googlemail.com>
 # sometime in 2010
