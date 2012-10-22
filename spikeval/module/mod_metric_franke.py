@@ -10,7 +10,7 @@
 
 """spike train alignment metric"""
 __docformat__ = 'restructuredtext'
-__all__ = ['ModMetricAlignment']
+__all__ = ['ModMetricFranke']
 
 
 ##--- IMPORTS
@@ -20,10 +20,9 @@ from .base_module import BaseModule, ModuleInputError, ModuleExecutionError
 from .result_types import MRTable, MRDict
 from ..util import dict_arrsort, dict_list2arr, matrix_argmax
 
-
 ##---CLASSES
 
-class ModMetricAlignment(BaseModule):
+class ModMetricFranke(BaseModule):
     """module: metric for spike train alignment
 
     computes the evaluation of spike sorting
@@ -156,7 +155,7 @@ class ModMetricAlignment(BaseModule):
         # spike trains
         for i in xrange(n):
             for j in xrange(m):
-                sfunc = ModMetricAlignment.similarity(
+                sfunc = ModMetricFranke.similarity(
                     self.sts_gt[self.sts_gt.keys()[i]],
                     self.sts_ev[self.sts_ev.keys()[j]],
                     max_shift)
@@ -292,7 +291,7 @@ class ModMetricAlignment(BaseModule):
         # correct/error numbers.
 
         # mark all the overlapping spikes
-        ret = ModMetricAlignment.overlaps(self.sts_gt, max_oldist)
+        ret = ModMetricFranke.overlaps(self.sts_gt, max_oldist)
         O = ret['O']
         NO = ret['Onums']
 
@@ -465,7 +464,7 @@ class ModMetricAlignment(BaseModule):
 
         rval = sp.zeros(2 * mtau + 1)
         for tau in xrange(-mtau, mtau + 1):
-            rval[tau + mtau] = ModMetricAlignment.simi_kernel(st1, st2 + tau)
+            rval[tau + mtau] = ModMetricFranke.simi_kernel(st1, st2 + tau)
         return rval
 
     @staticmethod

@@ -19,4 +19,4 @@ from .mod_metric_franke import *
 
 ##---MODULES
 
-MODULES = [ModDataPlot, ModMetricAlignment]
+MODULES = [ModDataPlot, ModMetricFranke]
