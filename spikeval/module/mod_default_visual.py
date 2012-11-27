@@ -8,7 +8,7 @@
 
 """module for general data related plots"""
 __docformat__ = 'restructuredtext'
-__all__ = ['ModDataPlot']
+__all__ = ['ModDefaultVisual']
 
 
 ##--- IMPORTS
@@ -22,8 +22,8 @@ from ..plot import cluster, cluster_projection, spike_trains, waveforms
 
 ##---CLASSES
 
-class ModDataPlot(BaseModule):
-    """module for data plots"""
+class ModDefaultVisual(BaseModule):
+    """module for default visuals"""
 
     RESULT_TYPES = [
         MRPlot, # waveforms by units
@@ -32,6 +32,13 @@ class ModDataPlot(BaseModule):
         MRPlot, # cluster PC3/4
         MRPlot, # cluster projection
         MRPlot] # spike train set
+
+    def _check_parameters(self, parameters):
+        return {
+            'sampling_rate': parameters.get('sampling_rate', 32000.0),
+            'cut': parameters.get('cut', (32, 32)),
+            'name': parameters.get('name', 'noname'),
+            'noise_cov': parameters.get('noise_cov', None)}
 
     def _check_raw_data(self, raw_data):
         if raw_data is None:
@@ -48,13 +55,6 @@ class ModDataPlot(BaseModule):
         dict_list2arr(sts_ev)
         dict_arrsort(sts_ev)
         return sts_ev
-
-    def _check_parameters(self, parameters):
-        return {
-            'sampling_rate': parameters.get('sampling_rate', 32000.0),
-            'cut': parameters.get('cut', (32, 32)),
-            'name': parameters.get('name', 'noname'),
-            'noise_cov': parameters.get('noise_cov', None)}
 
     def _apply(self):
         self._stage = 2

@@ -20,7 +20,7 @@ except ImportError:
 
 import sys
 import scipy as sp
-from spikeval.module import ModDataPlot, ModMetricAlignment
+from spikeval.module import ModDefaultVisual, ModMetricFranke
 
 
 ##---TESTS
@@ -41,7 +41,7 @@ class TestModule(unittest.TestCase):
                        3:sp.array([222, 444, 666, 888]) + shift}
 
     def test_mod_data_plots(self):
-        mod = ModDataPlot(
+        mod = ModDefaultVisual(
             self.raw_data,
             self.sts_gt,
             self.sts_ev,
@@ -50,7 +50,7 @@ class TestModule(unittest.TestCase):
         self.assertEqual(mod.status, 'finalised')
 
     def test_metric_alignment(self):
-        mod = ModMetricAlignment(
+        mod = ModMetricFranke(
             self.raw_data,
             self.sts_gt,
             self.sts_ev,

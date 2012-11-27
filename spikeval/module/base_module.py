@@ -19,11 +19,11 @@ from .result_types import ModuleResult
 
 ##---class
 
-class ModuleInputError(ValueError):
+class ModuleExecutionError(RuntimeError):
     pass
 
 
-class ModuleExecutionError(RuntimeError):
+class ModuleInputError(ValueError):
     pass
 
 
@@ -77,7 +77,7 @@ class BaseModule(object):
 
         # check RESULT_TYPES
         if not all(map(issubclass, self.RESULT_TYPES,
-                       len(self.RESULT_TYPES) * [ModuleResult])):
+            len(self.RESULT_TYPES) * [ModuleResult])):
             raise ModuleExecutionError(
                 'not all result types are derived from : ModuleResult\n%s' %
                 self.RESULT_TYPES)
@@ -85,10 +85,23 @@ class BaseModule(object):
 
     @property
     def status(self):
-        return {0:'__init__',
-                1:'initialised',
-                2:'processing',
-                3:'finalised'}[self._stage]
+        return {0: '__init__',
+                1: 'initialised',
+                2: 'processing',
+                3: 'finalised'}[self._stage]
+
+    def check_parameters(self, parameters):
+        """check parameters
+
+        :type parameters
+        :param parameters:
+        :return: valid parameters
+        """
+
+        return self._check_parameters(parameters)
+
+    def _check_parameters(self, parameters):
+        return {}
 
     def check_raw_data(self, raw_data):
         """check if :raw_data: is valid raw data
@@ -131,19 +144,6 @@ class BaseModule(object):
 
     def _check_sts_ev(self, sts_ev):
         return None
-
-    def check_parameters(self, parameters):
-        """check parameters
-
-        :type parameters
-        :param parameters:
-        :return: valid parameters
-        """
-
-        return self._check_parameters(parameters)
-
-    def _check_parameters(self, parameters):
-        return {}
 
     def apply(self):
         self._stage = 2
