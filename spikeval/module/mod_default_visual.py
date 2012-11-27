@@ -154,12 +154,16 @@ class ModDefaultVisual(BaseModule):
     def plot_spike_trains(self):
         """:spikeplot.spike_train: plot
 
-        There will be one plot for the spike train set.
+        There will be one plot for the spike train set of the first five seconds of the data.
         """
+
+        five_sec = {}
+        for k, v in self.sts_ev.items():
+            five_sec[k] = v[v < self.parameters['sampling_rate'] * 5]
 
         self.result.append(
             spike_trains(
-                self.sts_ev,
+                five_sec,
                 samples_per_second=self.parameters['sampling_rate'],
                 marker_width=1))
 
