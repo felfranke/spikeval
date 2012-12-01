@@ -48,7 +48,7 @@ if __name__ == "__main__":
         include_package_data=True,
         install_requires=[
             'matplotlib',
-            'mdp',
+            'mdp-toolkit',
             'PIL>=1.1.6',
             'scipy>=0.6.0',
             'tables>=2.0',
