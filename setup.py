@@ -52,8 +52,7 @@ if __name__ == "__main__":
             'PIL>=1.1.6',
             'scipy>=0.6.0',
             'tables>=2.0',
-            'texttable>=0.8',
-            ],
+            'texttable>=0.8', ],
         requires=[],
 
         # metadata for upload to PyPI
