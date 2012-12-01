@@ -47,14 +47,14 @@ if __name__ == "__main__":
         packages=find_packages(),
         include_package_data=True,
         install_requires=[],
-        requires=[
-            'matplotlib',
-            'mdp',
-            'PIL>=1.1.6',
-            'scipy>=0.6.0',
-            'tables>=2.0',
-            'texttable>=0.8',
-        ],
+        requires=[],
+        # requirements seem to irritate pip!
+        #'matplotlib',
+        #'mdp',
+        #'PIL>=1.1.6',
+        #'scipy>=0.6.0',
+        #'tables>=2.0',
+        #'texttable>=0.8',
 
         # metadata for upload to PyPI
         author="Philipp Meier",
