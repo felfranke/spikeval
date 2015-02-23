@@ -123,10 +123,10 @@ class MRTable(ModuleResult):
         return self._value.shape
 
     def _str_val(self):
-        tt = Texttable()
+        tt = Texttable(max_width=120)
+        tt.add_rows(self._value, header=self.header is None)
         if self.header is not None:
             tt.header(self.header)
-        tt.add_rows(self._value, header=False)
         return tt.draw()
 
 
@@ -151,8 +151,8 @@ class MRDict(ModuleResult):
 
     def _str_val(self):
         tt = Texttable()
-        tt.header(['Key', 'Value'])
         tt.add_rows(self._value.items(), header=False)
+        tt.header(['Key', 'Value'])
         return tt.draw()
 
 

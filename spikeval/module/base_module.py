@@ -13,7 +13,7 @@ __all__ = ['BaseModule', 'ModuleInputError', 'ModuleExecutionError']
 
 ##---IMPORTS
 
-from ..logging import Logger
+from ..log import Logger
 from .result_types import ModuleResult
 
 

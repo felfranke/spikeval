@@ -19,6 +19,9 @@ import scipy as sp
 from .base_module import BaseModule, ModuleInputError, ModuleExecutionError
 from .result_types import MRTable, MRDict
 from ..util import dict_arrsort, dict_list2arr, matrix_argmax
+from spykeutils.spike_train_metrics import van_rossum_dist
+import quantities as pq
+import time
 
 ##---CLASSES
 
@@ -96,51 +99,52 @@ class ModMetricFranke(BaseModule):
     # module interface
 
     RESULT_TYPES = [
-        MRTable, # res_table
-        MRTable, # similarity_matrix
-        MRTable, # shift_matrix
-        MRTable, # sp.atleast_2d(delta_shift)
-        MRDict, # alignment
-        MRDict, # O
-        MRTable, # spike_no_assignment_matrix
-        MRDict, # EL
-        MRDict, # GL
-        MRTable, # sp.atleast_2d(TP)
-        MRTable, # sp.atleast_2d(TPO)
-        MRTable, # sp.atleast_2d(FPA)
-        MRTable, # sp.atleast_2d(FPAO)
-        MRTable, # sp.atleast_2d(FN)
-        MRTable, # sp.atleast_2d(FNO)
-        MRTable, # sp.atleast_2d(FP)
-        MRTable, # sp.atleast_2d(u_k2f)
-        MRTable, # sp.atleast_2d(u_f2k)
+        MRTable,  # res_table
+        MRTable,  # similarity_matrix
+        MRTable,  # shift_matrix
+        MRTable,  # sp.atleast_2d(delta_shift)
+        MRDict,  # alignment
+        MRDict,  # O
+        MRTable,  # spike_no_assignment_matrix
+        MRDict,  # EL
+        MRDict,  # GL
+        MRTable,  # sp.atleast_2d(TP)
+        MRTable,  # sp.atleast_2d(TPO)
+        MRTable,  # sp.atleast_2d(FPA)
+        MRTable,  # sp.atleast_2d(FPAO)
+        MRTable,  # sp.atleast_2d(FN)
+        MRTable,  # sp.atleast_2d(FNO)
+        MRTable,  # sp.atleast_2d(FP)
+        MRTable,  # sp.atleast_2d(u_k2f)
+        MRTable,  # sp.atleast_2d(u_f2k)
     ]
 
     def _check_sts_gt(self, sts_gt):
         if sts_gt is None:
-            raise ModuleInputError('sts_gt: '
-                                   'needs ground truth spike train set')
+            raise ModuleInputError('sts_gt: needs ground truth spike train set')
         dict_list2arr(sts_gt)
         dict_arrsort(sts_gt)
         return sts_gt
 
     def _check_sts_ev(self, sts_ev):
         if sts_ev is None:
-            raise ModuleInputError('sts_ev: '
-                                   'needs evaluation spike train set')
+            raise ModuleInputError('sts_ev: needs evaluation spike train set')
         dict_list2arr(sts_ev)
         dict_arrsort(sts_ev)
         return sts_ev
 
     def _check_parameters(self, parameters):
         return {
-            'sampling_rate':parameters.get('sampling_rate', 32000.0),
-            'name':parameters.get('name', 'noname'),
-            'maxshift':parameters.get('maxshift', 15),
-            'maxjitter':parameters.get('maxjitter', 6),
-            'maxoverlapdistance':parameters.get('maxoverlapdistance', 45), }
+            'sampling_rate': parameters.get('sampling_rate', 32000.0),
+            'name': parameters.get('name', 'noname'),
+            'maxshift': parameters.get('maxshift', 15),
+            'maxjitter': parameters.get('maxjitter', 6),
+            'maxoverlapdistance': parameters.get('maxoverlapdistance', 45), }
 
     def _apply(self):
+        global_tic = time.time()
+        self.logger.log("start module")
+        tic = time.time()
         # init and checks
         n = len(self.sts_gt)
         m = len(self.sts_ev)
@@ -151,8 +155,9 @@ class ModMetricFranke(BaseModule):
         shift_matrix = sp.zeros((n, m))
         sfuncs = sp.zeros((n, m, 2 * max_shift + 1))
 
-        # compute similarity score and optimal shift between all pairs of
-        # spike trains
+        self.logger.log("1) similarity")
+        tic = time.time()
+        # compute similarity score and optimal shift between all pairs of spike trains
         for i in xrange(n):
             for j in xrange(m):
                 sfunc = ModMetricFranke.similarity(
@@ -162,28 +167,35 @@ class ModMetricFranke(BaseModule):
                 similarity_matrix[i, j] = sfunc.max()
                 shift_matrix[i, j] = sfunc.argmax() - max_shift
                 sfuncs[i, j, :] = sfunc
+        self.logger.log("duration: {:05f}s".format(time.time() - tic))
 
-        # shift all estimated spike trains so that they fit optimal to the
-        # best matching true spike train
+        self.logger.log("2) shifting")
+        tic = time.time()
+        # shift all estimated spike trains so that they fit optimal to the best matching true
+        # spike train
         u_f2k = sp.zeros(m)
         delta_shift = sp.zeros(m)
         for j in xrange(m):
             myidx = similarity_matrix[:, j].argmax()
             delta_shift[j] = shift_matrix[myidx, j]
-            self.sts_ev[self.sts_ev.keys()[j]] =\
-            self.sts_ev[self.sts_ev.keys()[j]] + delta_shift[j]
+            self.sts_ev[self.sts_ev.keys()[j]] = self.sts_ev[self.sts_ev.keys()[j]] + delta_shift[j]
+        self.logger.log("duration: {:05f}s".format(time.time() - tic))
 
-        # sort the spiketrain pairings according to their similarity measure
-        # this ensures that the best matching spiketrains will get all the
-        # matching spikes. no spike that matches will thus be aligned to
-        # another spike train.
+        self.logger.log("3) pairing")
+        tic = time.time()
+        # sort the spiketrain pairings according to their similarity measure this ensures that the
+        # best matching spiketrains will get all the matching spikes. no spike that matches will
+        # thus be aligned to another spike train.
         sorted_tupels = []
         S = similarity_matrix.copy()
         for i in xrange(n * m):
             maxidx = S.argmax()
             sorted_tupels.append((int(sp.floor(maxidx / m)), maxidx % m))
             S[sorted_tupels[i]] = -1
+        self.logger.log("duration: {:05f}s".format(time.time() - tic))
 
+        self.logger.log("4) alignment")
+        tic = time.time()
         # init alignment dictonary
         alignment = {}
         idx = 0
@@ -192,34 +204,31 @@ class ModMetricFranke(BaseModule):
                 alignment[(self.sts_gt.keys()[i], self.sts_ev.keys()[j])] = []
                 idx += 1
 
-        # convert self.sts_gt and self.sts_ev to lists, otherwise we cant
-        # remove objects
+        # convert self.sts_gt and self.sts_ev to lists, otherwise we cant remove objects
         GBlocked = {}
         EBlocked = {}
         num_known = sp.zeros(n)
         for i in xrange(n):
             num_known[i] = self.sts_gt[self.sts_gt.keys()[i]].shape[0]
-            GBlocked[self.sts_gt.keys()[i]] = sp.zeros(
-                self.sts_gt[self.sts_gt.keys()[i]].shape)
+            GBlocked[self.sts_gt.keys()[i]] = sp.zeros(self.sts_gt[self.sts_gt.keys()[i]].shape)
         num_found = sp.zeros(m)
         for j in xrange(m):
             num_found[j] = self.sts_ev[self.sts_ev.keys()[j]].shape[0]
-            EBlocked[self.sts_ev.keys()[j]] = sp.zeros(
-                self.sts_ev[self.sts_ev.keys()[j]].shape)
+            EBlocked[self.sts_ev.keys()[j]] = sp.zeros(self.sts_ev[self.sts_ev.keys()[j]].shape)
 
         # GBlocked will contain for every _inserted_ spike a 0 or a 1
         # 0: it was not assigned to any of the found spike trains => FN
-        # 1: it was assigned to a spike of self.sts_ev => either TP or FN +
-        #   FPA
+        # 1: it was assigned to a spike of self.sts_ev => either TP or FN + FPA
         #
         # EBlocked will contain for every _found_ spike a 0 or a 1
         # 0: it was not assigned to any of the inserted spike trains => FP
-        # 1: it was assigned to a spike of self.sts_gt => it will be handled
-        # when self.sts_gt is analyzed!
+        # 1: it was assigned to a spike of self.sts_gt => it will be handled when self.sts_gt is analyzed!
+        self.logger.log("duration: {:05f}s".format(time.time() - tic))
 
+        self.logger.log("5) assignment")
+        tic = time.time()
         spike_no_assignment_matrix = sp.zeros((n, m))
-        # run over the sorted tupels and block all established spike
-        # assignments
+        # run over the sorted tupels and block all established spike assignments
         for i in xrange(n * m):
             k1idx = sorted_tupels[i][0]
             k2idx = sorted_tupels[i][1]
@@ -229,8 +238,8 @@ class ModMetricFranke(BaseModule):
             train2 = self.sts_ev[k2]
             idx1 = 0
             idx2 = 0
-            while idx1 < len(train1) and\
-                  idx2 < len(train2):
+            while idx1 < len(train1) and \
+                            idx2 < len(train2):
                 # if a spike is blocked it cannot be associated anymore. jump
                 if GBlocked[k1][idx1] == 1:
                     idx1 += 1
@@ -239,17 +248,15 @@ class ModMetricFranke(BaseModule):
                     idx2 += 1
                     continue
 
-                if train1[idx1] <= train2[idx2] + max_jitter and\
-                   train1[idx1] >= train2[idx2] - max_jitter:
+                if train1[idx1] <= train2[idx2] + max_jitter and train1[idx1] >= train2[idx2] - max_jitter:
                     # spike assignment found, remove spikes
                     alignment[(k1, k2)].append((idx1, idx2))
                     GBlocked[k1][idx1] = 1
                     EBlocked[k2][idx2] = 1
 
                     spike_no_assignment_matrix[k1idx, k2idx] += 1
-                    # We cannot calculate TP/FP/FNs here, since we dont yet
-                    # know which self.sts_gt belongs to which self.sts_ev (see
-                    # next step)
+                    # We cannot calculate TP/FP/FNs here, since we dont know yet which self.sts_gt
+                    # belongs to which self.sts_ev (see next step)
                 if train1[idx1] < train2[idx2]:
                     idx1 += 1
                 else:
@@ -261,7 +268,10 @@ class ModMetricFranke(BaseModule):
         # are more found spike trains than inserted (m>n), some wont have a
         # partner and be thus treated as FPs. If there are more inserted than
         # found (m>n) than some will be treated as being not found (FNs).
+        self.logger.log("duration: {:05f}s".format(time.time() - tic))
 
+        self.logger.log("6) unit correspondence")
+        tic = time.time()
         # Assignment vectors between true and estimated units
         u_k2f = sp.ones(n, dtype=sp.int16) * -1
         u_f2k = sp.ones(m, dtype=sp.int16) * -1
@@ -289,7 +299,10 @@ class ModMetricFranke(BaseModule):
         # now compare the number of assignments to the total number of spikes
         # in the corresponding trains. this will directly give the
         # correct/error numbers.
+        self.logger.log("duration: {:05f}s".format(time.time() - tic))
 
+        self.logger.log("7) evaluation")
+        tic = time.time()
         # mark all the overlapping spikes
         ret = ModMetricFranke.overlaps(self.sts_gt, max_oldist)
         O = ret['O']
@@ -302,18 +315,20 @@ class ModMetricFranke(BaseModule):
         EL = {}
         for k in self.sts_ev.keys():
             EL[k] = sp.zeros(self.sts_ev[k].shape, dtype=sp.int16)
+        self.logger.log("duration: {:05f}s".format(time.time() - tic))
 
-
+        self.logger.log("8) results")
+        tic = time.time()
         # run over every single spike and check which label it gets
-        #             1      2      3     4       5     6      7
+        # 1      2      3     4       5     6      7
         labelList = ['TP', 'TPO', 'FP', 'FPA', 'FPAO', 'FN', 'FNO']
         TP = sp.zeros(n)
         TPO = sp.zeros(n)
-        FP = sp.zeros(m) # m !!
+        FP = sp.zeros(m)  # m !!
         FPA = sp.zeros(n)
         FPAO = sp.zeros(n)
-        FPA_E = sp.zeros(m) # m!!
-        FPAO_E = sp.zeros(m) # m!!
+        FPA_E = sp.zeros(m)  # m!!
+        FPAO_E = sp.zeros(m)  # m!!
         FN = sp.zeros(n)
         FNO = sp.zeros(n)
         # handle the spikes which were aligned first
@@ -327,25 +342,25 @@ class ModMetricFranke(BaseModule):
                     # 'FNO']
                     if u_k2f[i] == j:
                         if ovp == 1:
-                            GL[k1][alignment[(k1, k2)][a][0]] = 2 # TPO
+                            GL[k1][alignment[(k1, k2)][a][0]] = 2  # TPO
                             EL[k2][alignment[(k1, k2)][a][1]] = 2
                             TPO[i] += 1
                         else:
-                            GL[k1][alignment[(k1, k2)][a][0]] = 1 # TP
+                            GL[k1][alignment[(k1, k2)][a][0]] = 1  # TP
                             EL[k2][alignment[(k1, k2)][a][1]] = 1
                             TP[i] += 1
                     else:
                         if ovp == 1:
-                            GL[k1][alignment[(k1, k2)][a][0]] = 5 #FPAO
+                            GL[k1][alignment[(k1, k2)][a][0]] = 5  # FPAO
                             EL[k2][alignment[(k1, k2)][a][1]] = 5
                             FPAO[i] += 1
                             FPAO_E[
-                            j] += 1  # Count assignment errors twice! FP + FN
+                                j] += 1  # Count assignment errors twice! FP + FN
                         else:
-                            GL[k1][alignment[(k1, k2)][a][0]] = 4 # FPA
+                            GL[k1][alignment[(k1, k2)][a][0]] = 4  # FPA
                             EL[k2][alignment[(k1, k2)][a][1]] = 4
                             FPA[i] += 1
-                            FPA_E[j] += 1 # Count assignment errors twice!
+                            FPA_E[j] += 1  # Count assignment errors twice!
 
             # Now check all spikes of i which have no labels. those are FNs
             for spk in xrange(len(GL[k1])):
@@ -364,25 +379,25 @@ class ModMetricFranke(BaseModule):
             FP[j] = 0
             for spk in xrange(len(EL[k2])):
                 if EL[k2][spk] == 0:
-                    EL[k2][spk] = 3 # FP
+                    EL[k2][spk] = 3  # FP
                     FP[j] += 1
 
         res_table_headers = [
-            'GT Unit ID', # ID of gt unit
-            'Found Unit ID', # ID of associated ev unit
-            'Known Spikes', # nos of gt unit
-            'Overlapping Spikes', # nos of overlaps
-            'Found Spikes', # nos of associated ev unit
-            'True Pos', # nos which are assigned to the associated gt unit.
-            'True Pos Ovps', # nos of overlaps
-            'False Pos Assign GT', # nos of ev unit which are assigned to
+            'GT Unit ID',  # ID of gt unit
+            'Found Unit ID',  # ID of associated ev unit
+            'Known Spikes',  # nos of gt unit
+            'Overlapping Spikes',  # nos of overlaps
+            'Found Spikes',  # nos of associated ev unit
+            'True Pos',  # nos which are assigned to the associated gt unit.
+            'True Pos Ovps',  # nos of overlaps
+            'False Pos Assign GT',  # nos of ev unit which are assigned to
             # to a non-associated gt unit
-            'False Pos Assign Found', #
-            'False Pos Ovps GT', # FPAO
-            'FPs Assign Ovps Found', # FPAO_E
-            'False Neg', #
-            'False Neg Overlaps', #
-            'False Pos', #
+            'False Pos Assign Found',  #
+            'False Pos Ovps GT',  # FPAO
+            'FPs Assign Ovps Found',  # FPAO_E
+            'False Neg',  #
+            'False Neg Overlaps',  #
+            'False Pos',  #
         ]
         res_table = []
 
@@ -438,33 +453,40 @@ class ModMetricFranke(BaseModule):
 
         # Build return _value dictionary
         self.result = [
-            MRTable(res_table, header=res_table_headers), # table
-            similarity_matrix, # table
-            shift_matrix, # table
-            sp.atleast_2d(delta_shift), # table
-            alignment, # dict
-            O, #dict
-            spike_no_assignment_matrix, # table
-            EL, # dict
-            GL, # dict
-            sp.atleast_2d(TP), # table
-            sp.atleast_2d(TPO), # table
-            sp.atleast_2d(FPA), # table
-            sp.atleast_2d(FPAO), # table
-            sp.atleast_2d(FN), # table
-            sp.atleast_2d(FNO), # table
-            sp.atleast_2d(FP), # table
-            sp.atleast_2d(u_k2f), # table
-            sp.atleast_2d(u_f2k), # table
+            MRTable(res_table, header=res_table_headers),  # table
+            similarity_matrix,  # table
+            shift_matrix,  # table
+            sp.atleast_2d(delta_shift),  # table
+            alignment,  # dict
+            O,  # dict
+            spike_no_assignment_matrix,  # table
+            EL,  # dict
+            GL,  # dict
+            sp.atleast_2d(TP),  # table
+            sp.atleast_2d(TPO),  # table
+            sp.atleast_2d(FPA),  # table
+            sp.atleast_2d(FPAO),  # table
+            sp.atleast_2d(FN),  # table
+            sp.atleast_2d(FNO),  # table
+            sp.atleast_2d(FP),  # table
+            sp.atleast_2d(u_k2f),  # table
+            sp.atleast_2d(u_f2k),  # table
         ]
+        self.logger.log("duration: {:05f}s".format(time.time() - tic))
+        self.logger.log_delimiter_line()
+        self.logger.log("total duration: {:05f}s".format(time.time() - global_tic))
 
     @staticmethod
     def similarity(st1, st2, mtau):
         """calculates xcorr function between spike trains st1 and st2"""
 
+        # st1_q = st1 * pq.ms / 32.0
+        # st2_q = st2 * pq.ms / 32.0
+
         rval = sp.zeros(2 * mtau + 1)
         for tau in xrange(-mtau, mtau + 1):
             rval[tau + mtau] = ModMetricFranke.simi_kernel(st1, st2 + tau)
+            # rval[tau + mtau] = van_rossum_dist((st1_q, st2_q + tau * pq.ms / 32.0), sort=False)[0, 1]
         return rval
 
     @staticmethod
@@ -522,7 +544,7 @@ class ModMetricFranke(BaseModule):
                         idxI += 1
                     else:
                         idxJ += 1
-        ret = {'O':O, 'Onums':Onums}
+        ret = {'O': O, 'Onums': Onums}
         return ret
 
 ##--- MAIN

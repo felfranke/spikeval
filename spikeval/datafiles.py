@@ -6,21 +6,14 @@
 # 2009-05-16
 #
 
-from __future__ import with_statement
-
 """reading spike trains from GDF and raw data from HDF5"""
 __docformat__ = 'restructuredtext'
 __all__ = ['read_gdf_sts', 'read_hdf5_arc', 'create_hdf5_arc', 'create_gdf']
-
-
-##---IMPORTS
 
 import scipy as sp
 from tables import openFile
 from util import dict_arrsort, dict_list2arr, sortrows
 
-
-##---FUNCTIONS
 
 def read_gdf_sts(file_name):
     """reads a .gdf file and returns contents, mapping unit id to spike train

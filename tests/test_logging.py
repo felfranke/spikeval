@@ -19,7 +19,7 @@ except ImportError:
     import unittest
 
 import os
-from spikeval.logging import Logger
+from spikeval.log import Logger
 from StringIO import StringIO
 
 

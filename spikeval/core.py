@@ -14,7 +14,7 @@ __docformat__ = 'restructuredtext'
 ##---IMPORTS
 
 import sys
-from .logging import Logger
+from .log import Logger
 
 
 ##---FUNCTIONS
