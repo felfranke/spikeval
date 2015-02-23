@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# spikeval - logging.py
+# spikeval - log.py
 #
 # Philipp Meier - <pmeier82 at gmail dot com>
 # 2011-10-18
