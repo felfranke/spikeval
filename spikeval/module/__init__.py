@@ -14,9 +14,9 @@ __docformat__ = 'restructuredtext'
 
 from .base_module import *
 from .result_types import *
-from .mod_default_visual import *
+from .mod_default import *
 from .mod_metric_franke import *
 
 ##---MODULES
 
-MODULES = [ModDefaultVisual, ModMetricFranke]
+MODULES = [ModDefault, ModMetricFranke]

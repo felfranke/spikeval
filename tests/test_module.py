@@ -20,7 +20,7 @@ except ImportError:
 
 import sys
 import scipy as sp
-from spikeval.module import ModDefaultVisual, ModMetricFranke
+from spikeval.module import ModDefault, ModMetricFranke
 
 
 ##---TESTS
@@ -41,7 +41,7 @@ class TestModule(unittest.TestCase):
                        3:sp.array([222, 444, 666, 888]) + shift}
 
     def test_mod_data_plots(self):
-        mod = ModDefaultVisual(
+        mod = ModDefault(
             self.raw_data,
             self.sts_gt,
             self.sts_ev,

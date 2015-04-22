@@ -8,7 +8,7 @@
 
 """module for general data related plots"""
 __docformat__ = 'restructuredtext'
-__all__ = ['ModDefaultVisual']
+__all__ = ['ModDefault']
 
 
 ##--- IMPORTS
@@ -22,7 +22,7 @@ from ..plot import cluster, cluster_projection, spike_trains, waveforms
 
 ##---CLASSES
 
-class ModDefaultVisual(BaseModule):
+class ModDefault(BaseModule):
     """module for default visuals"""
 
     RESULT_TYPES = [
